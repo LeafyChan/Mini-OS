@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 390" width="680" height="390" font-family="DejaVu Sans, Verdana, sans-serif">
+  <defs>
+    <marker id="e1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#52514e"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl  { font-size:12px; font-weight:bold; fill:#0b0b0b; }
+    .sub  { font-size:10px; fill:#52514e; }
+    .cap  { font-size:11px; fill:#52514e; }
+    .mono { font-size:10.5px; font-family:"DejaVu Sans Mono",monospace; fill:#0b0b0b; }
+    .tiny { font-size:9.5px; font-family:"DejaVu Sans Mono",monospace; fill:#52514e; }
+    .box  { stroke-width:1.4; rx:3; }
+  </style>
+  <rect x="0" y="0" width="680" height="390" fill="#fcfcfb"/>
+
+  <text class="lbl" x="24" y="24">Where every number on screen comes from</text>
+  <text class="sub" x="24" y="40">None of these files exist on disk. The kernel writes the text at the moment you read it.</text>
+
+  <!-- kernel band -->
+  <rect class="box" x="24" y="56" width="180" height="252" fill="#f2f2f0" stroke="#0b0b0b"/>
+  <text class="lbl" x="114" y="78" text-anchor="middle">THE KERNEL</text>
+  <text class="sub" x="114" y="94" text-anchor="middle">live state, in memory</text>
+
+  <rect class="box" x="40" y="108" width="148" height="28" fill="#ffffff" stroke="#9a9a93"/>
+  <text class="tiny" x="114" y="126" text-anchor="middle">boot clock</text>
+  <rect class="box" x="40" y="144" width="148" height="28" fill="#ffffff" stroke="#9a9a93"/>
+  <text class="tiny" x="114" y="162" text-anchor="middle">page allocator</text>
+  <rect class="box" x="40" y="180" width="148" height="28" fill="#ffffff" stroke="#9a9a93"/>
+  <text class="tiny" x="114" y="198" text-anchor="middle">scheduler run queue</text>
+  <rect class="box" x="40" y="216" width="148" height="28" fill="#ffffff" stroke="#9a9a93"/>
+  <text class="tiny" x="114" y="234" text-anchor="middle">per-CPU tick counters</text>
+  <rect class="box" x="40" y="252" width="148" height="28" fill="#ffffff" stroke="#9a9a93"/>
+  <text class="tiny" x="114" y="270" text-anchor="middle">process table</text>
+
+  <!-- /proc band -->
+  <text class="lbl" x="322" y="78" text-anchor="middle">/proc  —  the text view</text>
+
+  <rect class="box" x="236" y="108" width="172" height="28" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="246" y="126">/proc/uptime</text>
+  <rect class="box" x="236" y="144" width="172" height="28" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="246" y="162">/proc/meminfo</text>
+  <rect class="box" x="236" y="180" width="172" height="28" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="246" y="198">/proc/loadavg</text>
+  <rect class="box" x="236" y="216" width="172" height="28" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="246" y="234">/proc/stat</text>
+  <rect class="box" x="236" y="252" width="172" height="28" fill="#fdefe8" stroke="#eb6834"/>
+  <text class="mono" x="246" y="270">/proc/&lt;pid&gt;/stat</text>
+
+  <path class="box" d="M 188 122 L 234 122" stroke="#52514e" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+  <path class="box" d="M 188 158 L 234 158" stroke="#52514e" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+  <path class="box" d="M 188 194 L 234 194" stroke="#52514e" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+  <path class="box" d="M 188 230 L 234 230" stroke="#52514e" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+  <path class="box" d="M 188 266 L 234 266" stroke="#52514e" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+
+  <!-- commands band -->
+  <text class="lbl" x="560" y="78" text-anchor="middle">MiniOS command</text>
+
+  <rect class="box" x="458" y="104" width="86" height="104" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="501" y="150" text-anchor="middle" font-weight="bold">system</text>
+  <text class="tiny" x="501" y="168" text-anchor="middle">M1</text>
+
+  <rect class="box" x="458" y="216" width="86" height="28" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="501" y="235" text-anchor="middle" font-weight="bold">cpu</text>
+
+  <rect class="box" x="458" y="252" width="86" height="28" fill="#fdefe8" stroke="#eb6834"/>
+  <text class="mono" x="501" y="271" text-anchor="middle" font-weight="bold">processes</text>
+
+  <rect class="box" x="572" y="160" width="84" height="120" fill="#ffffff" stroke="#9a9a93" stroke-dasharray="4 3"/>
+  <text class="mono" x="614" y="212" text-anchor="middle" font-weight="bold">top</text>
+  <text class="tiny" x="614" y="230" text-anchor="middle">M1</text>
+  <text class="tiny" x="614" y="248" text-anchor="middle">re-reads all</text>
+  <text class="tiny" x="614" y="262" text-anchor="middle">five, per frame</text>
+
+  <path d="M 408 122 L 456 122" stroke="#2a78d6" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+  <path d="M 408 158 L 456 158" stroke="#2a78d6" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+  <path d="M 408 194 L 456 194" stroke="#2a78d6" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+  <path d="M 408 230 L 456 230" stroke="#2a78d6" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+  <path d="M 408 266 L 456 266" stroke="#eb6834" stroke-width="1.3" fill="none" marker-end="url(#e1)"/>
+
+  <path d="M 544 156 L 558 156 L 558 200 L 570 200" stroke="#9a9a93" stroke-width="1.2" fill="none" marker-end="url(#e1)"/>
+  <path d="M 544 230 L 558 230 L 558 212 L 570 212" stroke="#9a9a93" stroke-width="1.2" fill="none" marker-end="url(#e1)"/>
+  <path d="M 544 266 L 558 266 L 558 240 L 570 240" stroke="#9a9a93" stroke-width="1.2" fill="none" marker-end="url(#e1)"/>
+
+  <text class="cap" x="340" y="340" text-anchor="middle">Figure 5 — The /proc data path. Blue is Module 1 (Anvitha), orange is Module 2 (Srujana).</text>
+  <text class="cap" x="340" y="358" text-anchor="middle">The dashboard is where the two modules meet: it re-reads all five sources on every frame.</text>
+</svg>

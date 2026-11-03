@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 410" width="680" height="410" font-family="DejaVu Sans, Verdana, sans-serif">
+  <defs>
+    <marker id="d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#52514e"/>
+    </marker>
+    <marker id="d2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e34948"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl  { font-size:12px; font-weight:bold; fill:#0b0b0b; }
+    .sub  { font-size:9.5px; fill:#52514e; }
+    .cap  { font-size:11px; fill:#52514e; }
+    .mono { font-size:10px; font-family:"DejaVu Sans Mono",monospace; fill:#0b0b0b; }
+    .stg  { font-size:11px; font-weight:bold; fill:#0b0b0b; }
+    .box  { stroke-width:1.4; rx:3; }
+  </style>
+  <rect x="0" y="0" width="680" height="410" fill="#fcfcfb"/>
+
+  <text class="lbl" x="24" y="24">Does fork() copy the parent's memory?  Measured answer: no — not until something writes.</text>
+
+  <!-- ===== stage 1 : x 24..232 ===== -->
+  <text class="stg" x="24" y="56">1.  After fork()</text>
+  <text class="sub" x="24" y="71">same pages, both marked read-only</text>
+
+  <rect class="box" x="24" y="84" width="70" height="25" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="59" y="101" text-anchor="middle">parent</text>
+  <rect class="box" x="24" y="148" width="70" height="25" fill="#fdefe8" stroke="#eb6834"/>
+  <text class="mono" x="59" y="165" text-anchor="middle">child</text>
+
+  <rect class="box" x="142" y="96" width="56" height="65" fill="#f2f2f0" stroke="#52514e"/>
+  <text class="mono" x="170" y="122" text-anchor="middle">page A</text>
+  <text class="sub"  x="170" y="138" text-anchor="middle">read-only</text>
+
+  <path d="M 94 96 Q 118 96 140 116" stroke="#2a78d6" stroke-width="1.5" fill="none" marker-end="url(#d1)"/>
+  <path d="M 94 161 Q 118 161 140 141" stroke="#eb6834" stroke-width="1.5" fill="none" marker-end="url(#d1)"/>
+
+  <text class="sub" x="24" y="192" font-style="italic">one physical page, two owners</text>
+
+  <!-- ===== stage 2 : x 252..460 ===== -->
+  <line x1="240" y1="48" x2="240" y2="200" stroke="#d8d8d4" stroke-width="1"/>
+  <text class="stg" x="252" y="56">2.  The child writes</text>
+  <text class="sub" x="252" y="71">writing a read-only page traps</text>
+
+  <rect class="box" x="252" y="84" width="70" height="25" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="287" y="101" text-anchor="middle">parent</text>
+  <rect class="box" x="252" y="148" width="70" height="25" fill="#fdefe8" stroke="#eb6834"/>
+  <text class="mono" x="287" y="165" text-anchor="middle">child</text>
+
+  <rect class="box" x="370" y="96" width="56" height="65" fill="#f2f2f0" stroke="#52514e"/>
+  <text class="mono" x="398" y="122" text-anchor="middle">page A</text>
+  <text class="sub"  x="398" y="138" text-anchor="middle">read-only</text>
+
+  <path d="M 322 96 Q 346 96 368 116" stroke="#2a78d6" stroke-width="1.5" fill="none" marker-end="url(#d1)"/>
+  <path d="M 322 161 Q 346 161 368 141" stroke="#e34948" stroke-width="1.8" fill="none" marker-end="url(#d2)"/>
+
+  <text class="sub" x="252" y="192" fill="#e34948">write → page fault → kernel</text>
+
+  <!-- ===== stage 3 : x 480..656 ===== -->
+  <line x1="468" y1="48" x2="468" y2="200" stroke="#d8d8d4" stroke-width="1"/>
+  <text class="stg" x="480" y="56">3.  One page is copied</text>
+  <text class="sub" x="480" y="71">only the page written; rest shared</text>
+
+  <rect class="box" x="480" y="84" width="64" height="25" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="512" y="101" text-anchor="middle">parent</text>
+  <rect class="box" x="480" y="148" width="64" height="25" fill="#fdefe8" stroke="#eb6834"/>
+  <text class="mono" x="512" y="165" text-anchor="middle">child</text>
+
+  <rect class="box" x="592" y="82" width="58" height="30" fill="#f2f2f0" stroke="#52514e"/>
+  <text class="mono" x="621" y="101" text-anchor="middle">page A</text>
+  <rect class="box" x="592" y="145" width="58" height="30" fill="#fdefe8" stroke="#eb6834"/>
+  <text class="mono" x="621" y="164" text-anchor="middle">page A'</text>
+
+  <path d="M 544 96 L 590 97" stroke="#2a78d6" stroke-width="1.5" fill="none" marker-end="url(#d1)"/>
+  <path d="M 544 161 L 590 160" stroke="#eb6834" stroke-width="1.5" fill="none" marker-end="url(#d1)"/>
+
+  <text class="sub" x="480" y="192" font-style="italic">now genuinely independent</text>
+
+  <!-- measurement strip -->
+  <rect class="box" x="24" y="216" width="632" height="116" fill="#ffffff" stroke="#0b0b0b"/>
+  <text class="lbl" x="40" y="239">What we measured — parent holding 256 MB, fork + wait, median of 40 rounds</text>
+
+  <rect x="40" y="258" width="13" height="13" fill="#2a78d6"/>
+  <text class="mono" x="62" y="269">child exits immediately</text>
+  <text class="mono" x="246" y="269" font-weight="bold">5.50 ms</text>
+  <text class="sub"  x="330" y="269">nothing copied — only page tables duplicated</text>
+
+  <rect x="40" y="288" width="13" height="13" fill="#eb6834"/>
+  <text class="mono" x="62" y="299">child writes every page</text>
+  <text class="mono" x="246" y="299" font-weight="bold">184.48 ms</text>
+  <text class="sub"  x="330" y="299">every page faulted and copied</text>
+
+  <line x1="40" y1="309" x2="640" y2="309" stroke="#e8e8e4" stroke-width="1"/>
+  <text class="mono" x="40" y="325" fill="#e34948" font-weight="bold">forcing the copy costs 33.6× more</text>
+  <text class="sub" x="286" y="325">— and exec would have thrown every copied page away</text>
+
+  <text class="cap" x="340" y="362" text-anchor="middle">Figure 4 — Copy-on-write. This is why fork followed immediately by exec is not wasteful:</text>
+  <text class="cap" x="340" y="378" text-anchor="middle">exec discards the whole address space, and almost none of it had been copied.</text>
+</svg>

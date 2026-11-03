@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 420" width="680" height="420" font-family="DejaVu Sans, Verdana, sans-serif">
+  <defs>
+    <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#52514e"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl  { font-size:12px; font-weight:bold; fill:#0b0b0b; }
+    .sub  { font-size:10.5px; fill:#52514e; }
+    .cap  { font-size:11px; fill:#52514e; }
+    .mono { font-size:11px; font-family:"DejaVu Sans Mono",monospace; fill:#0b0b0b; }
+    .tiny { font-size:9.5px; font-family:"DejaVu Sans Mono",monospace; fill:#52514e; }
+    .box  { stroke-width:1.5; rx:4; }
+  </style>
+  <rect x="0" y="0" width="680" height="420" fill="#fcfcfb"/>
+
+  <text class="lbl" x="24" y="26">MiniOS&gt; run date   —   three system calls, three different jobs</text>
+
+  <!-- time axis -->
+  <path d="M 24 352 L 650 352" stroke="#9a9a93" stroke-width="1.2" fill="none" marker-end="url(#c1)"/>
+  <text class="sub" x="650" y="370" text-anchor="end">time</text>
+
+  <!-- stage markers -->
+  <line x1="170" y1="52" x2="170" y2="352" stroke="#d8d8d4" stroke-width="1" stroke-dasharray="3 3"/>
+  <line x1="340" y1="52" x2="340" y2="352" stroke="#d8d8d4" stroke-width="1" stroke-dasharray="3 3"/>
+  <line x1="510" y1="52" x2="510" y2="352" stroke="#d8d8d4" stroke-width="1" stroke-dasharray="3 3"/>
+
+  <text class="mono" x="170" y="68" text-anchor="middle" fill="#2a78d6">fork()</text>
+  <text class="mono" x="340" y="68" text-anchor="middle" fill="#eb6834">execvp()</text>
+  <text class="mono" x="510" y="68" text-anchor="middle" fill="#1a7a4a">_exit()</text>
+
+  <!-- parent lane -->
+  <text class="lbl" x="24" y="110">PARENT</text>
+  <text class="sub" x="24" y="126">MiniOS</text>
+  <rect class="box" x="92" y="96" width="78" height="30" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="tiny" x="131" y="115" text-anchor="middle">running</text>
+
+  <rect class="box" x="170" y="96" width="400" height="30" fill="#f2f2f0" stroke="#52514e"/>
+  <text class="tiny" x="370" y="115" text-anchor="middle">blocked inside waitpid() — not using any CPU</text>
+
+  <rect class="box" x="570" y="96" width="80" height="30" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="tiny" x="610" y="115" text-anchor="middle">resumes</text>
+
+  <!-- child lane -->
+  <text class="lbl" x="24" y="206">CHILD</text>
+  <text class="sub" x="24" y="222">new process</text>
+  <rect class="box" x="170" y="192" width="170" height="30" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="tiny" x="255" y="211" text-anchor="middle">a copy of MiniOS</text>
+
+  <rect class="box" x="340" y="192" width="170" height="30" fill="#fdefe8" stroke="#eb6834"/>
+  <text class="tiny" x="425" y="211" text-anchor="middle">now it is /bin/date</text>
+
+  <!-- fork split arrow -->
+  <path d="M 170 126 L 170 192" stroke="#2a78d6" stroke-width="1.8" fill="none" marker-end="url(#c1)"/>
+  <text class="sub" x="178" y="160" fill="#2a78d6">a second process exists</text>
+
+  <!-- exit arrow back to parent -->
+  <path d="M 510 192 L 510 160 L 570 160 L 570 128" stroke="#1a7a4a" stroke-width="1.8" fill="none" marker-end="url(#c1)"/>
+  <text class="sub" x="504" y="152" text-anchor="end" fill="#1a7a4a">exit status goes back to the parent</text>
+
+  <!-- the three jobs, spelled out -->
+  <rect class="box" x="24" y="252" width="196" height="76" fill="#ffffff" stroke="#2a78d6"/>
+  <text class="mono" x="36" y="272" fill="#2a78d6">fork()</text>
+  <text class="sub"  x="36" y="290">makes a process.</text>
+  <text class="sub"  x="36" y="306">It does NOT load</text>
+  <text class="sub"  x="36" y="320">a program.</text>
+
+  <rect class="box" x="238" y="252" width="196" height="76" fill="#ffffff" stroke="#eb6834"/>
+  <text class="mono" x="250" y="272" fill="#eb6834">exec()</text>
+  <text class="sub"  x="250" y="290">loads a program.</text>
+  <text class="sub"  x="250" y="306">It does NOT make a</text>
+  <text class="sub"  x="250" y="320">process. Never returns.</text>
+
+  <rect class="box" x="452" y="252" width="198" height="76" fill="#ffffff" stroke="#1a7a4a"/>
+  <text class="mono" x="464" y="272" fill="#1a7a4a">waitpid()</text>
+  <text class="sub"  x="464" y="290">collects the status,</text>
+  <text class="sub"  x="464" y="306">and stops the child</text>
+  <text class="sub"  x="464" y="320">becoming a zombie.</text>
+
+  <text class="cap" x="340" y="392" text-anchor="middle">Figure 3 — Why fork and exec are separate calls: the gap between them is the only place</text>
+  <text class="cap" x="340" y="408" text-anchor="middle">a child can change what the new program will inherit (redirection, limits, open files).</text>
+</svg>

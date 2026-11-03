@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 450" width="680" height="450" font-family="DejaVu Sans, Verdana, sans-serif">
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#52514e"/>
+    </marker>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#eb6834"/>
+    </marker>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9a9a93"/>
+    </marker>
+  </defs>
+  <style>
+    .ttl  { font-size:15px; font-weight:bold; fill:#0b0b0b; }
+    .lbl  { font-size:12.5px; font-weight:bold; fill:#0b0b0b; }
+    .sub  { font-size:11px; fill:#52514e; }
+    .cap  { font-size:11px; fill:#52514e; }
+    .mono { font-size:10.5px; font-family:"DejaVu Sans Mono",monospace; fill:#0b0b0b; }
+    .dim  { font-size:10.5px; font-family:"DejaVu Sans Mono",monospace; fill:#52514e; }
+    .own  { font-size:10.5px; font-style:italic; fill:#52514e; }
+    .ln   { stroke:#52514e; stroke-width:1.6; fill:none; marker-end:url(#a1); }
+    .box  { stroke-width:1.6; rx:5; }
+  </style>
+
+  <rect x="0" y="0" width="680" height="450" fill="#fcfcfb"/>
+
+  <!-- MiniOS core -->
+  <rect class="box" x="245" y="18" width="190" height="56" fill="#f2f2f0" stroke="#0b0b0b"/>
+  <text class="ttl"  x="340" y="41" text-anchor="middle">MiniOS</text>
+  <text class="sub"  x="340" y="59" text-anchor="middle">shell · command table · dispatch</text>
+
+  <!-- spine -->
+  <path d="M 340 74 L 340 96" stroke="#52514e" stroke-width="1.6" fill="none"/>
+  <path d="M 150 96 L 530 96" stroke="#52514e" stroke-width="1.6" fill="none"/>
+  <path d="M 530 96 L 615 96" stroke="#9a9a93" stroke-width="1.6" stroke-dasharray="5 4" fill="none"/>
+  <path class="ln" d="M 150 96 L 150 132"/>
+  <path class="ln" d="M 420 96 L 420 132"/>
+  <path d="M 615 96 L 615 132" stroke="#9a9a93" stroke-width="1.6" stroke-dasharray="5 4" fill="none" marker-end="url(#a3)"/>
+
+  <!-- Module 1 -->
+  <rect class="box" x="30" y="132" width="240" height="148" fill="#eaf2fc" stroke="#2a78d6"/>
+  <rect x="30" y="132" width="240" height="26" rx="5" fill="#2a78d6"/>
+  <rect x="30" y="150" width="240" height="8" fill="#2a78d6"/>
+  <text class="lbl" x="44" y="150" fill="#ffffff">MODULE 1 — system</text>
+  <text class="own" x="44" y="178">Anvitha · handbook Chapter 3</text>
+  <text class="mono" x="44" y="202">system</text><text class="dim" x="118" y="202">uptime, memory, load</text>
+  <text class="mono" x="44" y="222">cpu</text>   <text class="dim" x="118" y="222">per-core usage, temps</text>
+  <text class="mono" x="44" y="242">top</text>   <text class="dim" x="118" y="242">live dashboard</text>
+  <text class="sub"  x="44" y="267">reads /proc — no system calls</text>
+
+  <!-- Module 2 -->
+  <rect class="box" x="300" y="132" width="240" height="148" fill="#fdefe8" stroke="#eb6834"/>
+  <rect x="300" y="132" width="240" height="26" rx="5" fill="#eb6834"/>
+  <rect x="300" y="150" width="240" height="8" fill="#eb6834"/>
+  <text class="lbl" x="314" y="150" fill="#ffffff">MODULE 2 — process</text>
+  <text class="own" x="314" y="178">Srujana · handbook Chapter 4</text>
+  <text class="mono" x="314" y="202">run</text>      <text class="dim" x="394" y="202">fork → exec → wait</text>
+  <text class="mono" x="314" y="222">processes</text><text class="dim" x="394" y="222">table from /proc</text>
+  <text class="sub"  x="314" y="250">creates processes and collects</text>
+  <text class="sub"  x="314" y="267">their exit status</text>
+
+  <!-- Future modules -->
+  <rect class="box" x="570" y="132" width="90" height="148" fill="#f7f7f5" stroke="#9a9a93" stroke-dasharray="5 4"/>
+  <text class="lbl"  x="615" y="154" text-anchor="middle" fill="#52514e">M3 – M5</text>
+  <text class="sub"  x="615" y="172" text-anchor="middle">Chapters 5–7</text>
+  <text class="dim"  x="615" y="198" text-anchor="middle">pipes</text>
+  <text class="dim"  x="615" y="216" text-anchor="middle">threads</text>
+  <text class="dim"  x="615" y="234" text-anchor="middle">semaphores</text>
+  <text class="own"  x="615" y="258" text-anchor="middle">Aarnavi</text>
+  <text class="own"  x="615" y="272" text-anchor="middle">Advik · Krishna</text>
+
+  <!-- the one cross-module call, routed clear of everything -->
+  <path d="M 200 280 Q 200 308 240 308 L 330 308 Q 370 308 370 282"
+        stroke="#eb6834" stroke-width="1.8" fill="none" marker-end="url(#a2)"/>
+  <text x="285" y="326" text-anchor="middle" font-size="10.5" fill="#eb6834">
+    the only cross-module call: top() uses proc_list()
+  </text>
+
+  <!-- the shared contract -->
+  <path class="ln" d="M 90 280 L 90 352"/>
+  <path class="ln" d="M 490 280 L 490 352"/>
+  <path d="M 615 280 L 615 374 L 548 374" stroke="#9a9a93" stroke-width="1.6" stroke-dasharray="5 4" fill="none" marker-end="url(#a3)"/>
+
+  <rect class="box" x="60" y="352" width="480" height="44" fill="#f2f2f0" stroke="#0b0b0b"/>
+  <text class="lbl"  x="300" y="372" text-anchor="middle">include/minios.h — the shared contract</text>
+  <text class="sub"  x="300" y="389" text-anchor="middle">every .c includes this; no .c includes another</text>
+
+  <text class="cap" x="340" y="425" text-anchor="middle">Figure 1 — MiniOS architecture and module ownership.</text>
+  <text class="cap" x="340" y="441" text-anchor="middle">Modules meet only at the shared header. Modules 3–5 attach the same way, with no change to existing code.</text>
+</svg>

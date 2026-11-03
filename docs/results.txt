@@ -1,0 +1,68 @@
+MiniOS — Experiments and Analysis
+date    : Thu Oct  8 07:10:21 Asia 2026
+kernel  : Linux 6.18.44-fc-v80
+cpus    : 2
+memory  : 8031 MB
+compiler: gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+----------------------------------------------------------
+EXPERIMENT 1 — what does fork cost, and what does exec add?
+----------------------------------------------------------
+EXP1 fork + _exit + wait           0.125 ms   (range 0.117 - 0.149 over 7 reps)
+EXP1 fork + exec + wait            1.130 ms   (range 1.088 - 1.399 over 7 reps)
+EXP1 cost of exec alone            1.005 ms
+EXP1 exec makes it slower by        9.04 x    (worst case 11.98, best case 7.31)
+
+EXPERIMENT 2 — does fork() copy the parent's memory?
+----------------------------------------------------------
+EXP2 child exits immediately (does not touch the memory):
+EXP2   parent holds    1 MB -> fork+wait    0.217 ms
+EXP2   parent holds   16 MB -> fork+wait    0.852 ms
+EXP2   parent holds   64 MB -> fork+wait    2.006 ms
+EXP2   parent holds  256 MB -> fork+wait    5.497 ms
+EXP2 child WRITES to all of it (forces the real copy):
+EXP2   parent holds    1 MB -> fork+wait    0.962 ms
+EXP2   parent holds   16 MB -> fork+wait   12.375 ms
+EXP2   parent holds   64 MB -> fork+wait   45.932 ms
+EXP2   parent holds  256 MB -> fork+wait  184.484 ms
+
+EXPERIMENT 3 — zombie and orphan processes
+----------------------------------------------------------
+EXP3 zombie: child exits, parent deliberately does not wait()
+EXP3   before wait()          pid=21807 state=Z ppid=21806   <- ZOMBIE
+EXP3   after wait()           pid 21807 is gone from /proc
+
+EXP3 orphan: parent exits first, child keeps running
+EXP3   grandchild now         pid=21809 state=S ppid=1   <- REPARENTED
+
+EXPERIMENT 4 — cost of MiniOS's own /proc scan
+----------------------------------------------------------
+EXP4 processes on this machine            64
+EXP4 one full /proc scan               0.413 ms
+EXP4 cost per process                 0.0065 ms
+EXP4 scans possible per second          2422
+EXP4 CPU used by top at 2.0s refresh   0.021 %
+EXP4 CPU used by top at 0.1s refresh   0.413 %
+
+EXPERIMENT 5 — stdio buffering across fork()
+----------------------------------------------------------
+EXP5 fork_demo straight to the terminal:
+EXP5   Before fork
+EXP5   I am the parent. Child PID=21817
+EXP5   I am the child. PID=21817
+EXP5 the same program, output piped:
+EXP5   Before fork
+EXP5   I am the parent. Child PID=21829
+EXP5   Before fork
+EXP5   I am the child. PID=21829
+EXP5 'Before fork' printed  1 time(s) on a terminal, 2 time(s) through a pipe
+
+EXPERIMENT 6 — the same work, measured by MiniOS itself
+----------------------------------------------------------
+EXP6 'run' reports wall-clock time for each child:
+EXP6   [run] /bin/true exited with status 0 after 2.6 ms
+EXP6   Thu Oct  8 07:10:37 Asia 2026
+EXP6   [run] /bin/date exited with status 0 after 1.3 ms
+EXP6   hog_cpu: finished 0.2 s of CPU
+EXP6   [run] ./build/ex_hog_cpu exited with status 0 after 207.1 ms
+----------------------------------------------------------
+done.

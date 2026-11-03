@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 345" width="680" height="345" font-family="DejaVu Sans, Verdana, sans-serif">
+  <style>
+    .lbl  { font-size:12px; font-weight:bold; fill:#0b0b0b; }
+    .sub  { font-size:10px; fill:#52514e; }
+    .cap  { font-size:11px; fill:#52514e; }
+    .mono { font-size:10.5px; font-family:"DejaVu Sans Mono",monospace; fill:#0b0b0b; }
+    .tiny { font-size:9.5px; fill:#52514e; }
+    .name { font-size:11px; font-weight:bold; fill:#0b0b0b; }
+    .box  { stroke-width:1.5; rx:4; }
+  </style>
+  <rect x="0" y="0" width="680" height="345" fill="#fcfcfb"/>
+
+  <text class="lbl" x="24" y="24">Kernel._.Crew — who owns what</text>
+  <text class="sub" x="24" y="40">Each module is one command table. The two merged modules did not require any change to each other's code.</text>
+
+  <!-- column headers -->
+  <text class="tiny" x="24"  y="68">MODULE</text>
+  <text class="tiny" x="104" y="68">HANDBOOK</text>
+  <text class="tiny" x="196" y="68">CONCEPT</text>
+  <text class="tiny" x="372" y="68">OWNER</text>
+  <text class="tiny" x="548" y="68">STATUS</text>
+  <line x1="24" y1="74" x2="656" y2="74" stroke="#9a9a93" stroke-width="1"/>
+
+  <!-- M1 -->
+  <rect class="box" x="24" y="84" width="632" height="38" fill="#eaf2fc" stroke="#2a78d6"/>
+  <text class="mono" x="36"  y="108" font-weight="bold">M1</text>
+  <text class="mono" x="104" y="108">Ch 3</text>
+  <text class="sub"  x="196" y="108">/proc — system, cpu, top</text>
+  <text class="name" x="372" y="108">Anvitha</text>
+  <text class="mono" x="548" y="108" fill="#1a7a4a" font-weight="bold">MERGED</text>
+
+  <!-- M2 -->
+  <rect class="box" x="24" y="128" width="632" height="38" fill="#fdefe8" stroke="#eb6834"/>
+  <text class="mono" x="36"  y="152" font-weight="bold">M2</text>
+  <text class="mono" x="104" y="152">Ch 4</text>
+  <text class="sub"  x="196" y="152">run, processes</text>
+  <text class="name" x="372" y="152">Srujana</text>
+  <text class="mono" x="548" y="152" fill="#1a7a4a" font-weight="bold">MERGED</text>
+
+  <!-- M3 -->
+  <rect class="box" x="24" y="176" width="632" height="34" fill="#f7f7f5" stroke="#9a9a93" stroke-dasharray="5 4"/>
+  <text class="mono" x="36"  y="198" font-weight="bold" fill="#52514e">M3</text>
+  <text class="mono" x="104" y="198" fill="#52514e">Ch 5</text>
+  <text class="sub"  x="196" y="198">pipes and IPC — submit</text>
+  
+  <text class="mono" x="548" y="198" fill="#9a7700">UPCOMING</text>
+
+  <!-- M4 -->
+  <rect class="box" x="24" y="216" width="632" height="34" fill="#f7f7f5" stroke="#9a9a93" stroke-dasharray="5 4"/>
+  <text class="mono" x="36"  y="238" font-weight="bold" fill="#52514e">M4</text>
+  <text class="mono" x="104" y="238" fill="#52514e">Ch 6–7</text>
+  <text class="sub"  x="196" y="238">threads, race conditions</text>
+  <text class="mono" x="548" y="238" fill="#9a7700">UPCOMING</text>
+
+  <!-- M5 -->
+  <rect class="box" x="24" y="256" width="632" height="34" fill="#f7f7f5" stroke="#9a9a93" stroke-dasharray="5 4"/>
+  <text class="mono" x="36"  y="278" font-weight="bold" fill="#52514e">M5</text>
+  <text class="mono" x="104" y="278" fill="#52514e">Ch 7–8</text>
+  <text class="sub"  x="196" y="278">semaphores, queue, xv6</text>
+  <text class="mono" x="548" y="278" fill="#9a7700">UPCOMING</text>
+
+  <!-- brace for the three upcoming -->
+  <path d="M 364 180 L 356 180 L 356 286 L 364 286" stroke="#9a9a93" stroke-width="1.2" fill="none"/>
+  <text x="372" y="228" font-size="10" font-weight="bold" fill="#52514e">Aarnavi · Advik</text>
+  <text x="372" y="243" font-size="10" font-weight="bold" fill="#52514e">Krishna</text>
+
+  <text class="cap" x="340" y="316" text-anchor="middle">Figure 6 — Module ownership and project status. Modules 3–5 attach through the same</text>
+  <text class="cap" x="340" y="332" text-anchor="middle">one-line mechanism Module 2 used, with no change to any existing file.</text>
+</svg>

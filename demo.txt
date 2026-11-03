@@ -1,0 +1,10 @@
+# MiniOS 2.0 demo — Modules 1 and 2
+help
+system
+cpu 300
+run date
+run /bin/true
+run definitelynotreal
+processes -m -n 8
+processes -t
+top 0.3 2
