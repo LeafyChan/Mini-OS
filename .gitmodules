@@ -1,0 +1,4 @@
+[submodule "xv6"]
+	path = xv6
+	url = git@github.com:Cypher16k/xv6-riscv.git
+	branch = m5-kernel
