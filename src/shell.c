@@ -1,4 +1,5 @@
 #include "minios.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,18 +9,20 @@ static cmd_status_t cmd_help(int argc, char **argv);
 static cmd_status_t cmd_quit(int argc, char **argv);
 
 const command_t cmds_shell[] = {
-    { "help",      cmd_help,      "help [command]",            "List commands, or show one command's usage" },
-    { "system",    cmd_system,    "system",                    "Uptime, memory and load, read from /proc" },
-    { "cpu",       cmd_cpu,       "cpu [sample_ms]",           "Per-core CPU usage and temperatures" },
-    { "top",       cmd_top,       "top [interval_s] [frames]", "Live dashboard; press q to leave" },
-    { "quit",      cmd_quit,      "quit",                      "Leave MiniOS (alias: exit)" },
-    { "exit",      cmd_quit,      "exit",                      "Leave MiniOS" },
-    { NULL, NULL, NULL, NULL }                  /* end marker */
+    { "help",      cmd_help,      "help [command]",            "list commands, or show the usage of one command" },
+    { "system",    cmd_system,    "system",                    "uptime, memory and load from /proc" },
+    { "cpu",       cmd_cpu,       "cpu [sample_ms]",           "cpu use per core, and temperatures" },
+    { "top",       cmd_top,       "top [interval_s] [frames]", "live dashboard, press q to leave" },
+    { "quit",      cmd_quit,      "quit",                      "leave MiniOS" },
+    { "exit",      cmd_quit,      "exit",                      "leave MiniOS" },
+    { NULL, NULL, NULL, NULL }
 };
 
 static const command_t *const all_tables[] = {
     cmds_shell,
-    cmds_process
+    cmds_process,
+    cmds_ipc,
+    cmds_threads,
     NULL
 };
 
@@ -45,16 +48,18 @@ static cmd_status_t cmd_help(int argc, char **argv)
     }
 
     static const char *const owners[] = {
-        "Module 1 — shell and system inspection (/proc)",
-        "Module 2 — processes (fork, exec, wait)"
+        "Module 1: shell and system inspection",
+        "Module 2: processes",
+        "Module 3: pipes, jobs and pipelines",
+        "Module 4: threads and synchronization"
     };
 
-    printf("%sMiniOS %s%s  —  %s\n", clr(ANSI_BOLD), MINIOS_VERSION, clr(ANSI_RESET), MINIOS_TEAM);
+    printf("%sMiniOS %s%s\n", clr(ANSI_BOLD), MINIOS_VERSION, clr(ANSI_RESET));
 
     for (int t = 0; all_tables[t]; t++) {
         printf("\n%s%s%s\n", clr(ANSI_CYAN), owners[t], clr(ANSI_RESET));
         for (const command_t *c = all_tables[t]; c->name; c++)
-            printf("  %-30s %s\n", c->usage, c->summary);
+            printf("  %-42s %s\n", c->usage, c->summary);
     }
     return CMD_OK;
 }
@@ -72,6 +77,9 @@ cmd_status_t shell_execute_line(char *line)
 
     if (*line == '\0' || *line == '#')
         return CMD_OK;
+
+    if (line_has_pipeline(line))
+        return run_pipeline(line) == 0 ? CMD_OK : CMD_ERROR;
 
     char *argv[MAX_ARGS];
     int argc = split_args(line, argv, MAX_ARGS);
@@ -119,7 +127,7 @@ int shell_run(FILE *in, bool interactive)
         errno = 0;
 
         if (fgets(buf, sizeof buf, in) == NULL) {
-            if (ferror(in) && errno == EINTR) { 
+            if (ferror(in) && errno == EINTR) {
                 clearerr(in);
                 putchar('\n');
                 continue;

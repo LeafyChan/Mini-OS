@@ -1,69 +1,41 @@
-# Makefile — type "make" to build, "./minios" to run.
-# "make examples" also builds the standalone handbook demos.
-#
-#   src/*.c  --compile-->  build/*.o  --link-->  minios
-#
-
 CC      = gcc
-CFLAGS  = -std=c11 -O2 -g -Wall -Wextra -D_GNU_SOURCE -Iinclude
-LDLIBS  = -lm
+CFLAGS  = -std=c11 -O2 -g -Wall -Wextra -Wpedantic -Werror -D_GNU_SOURCE -pthread -Iinclude
+LDLIBS  = -lm -pthread
 
-SRCS    = $(wildcard src/*.c)
-OBJS    = $(patsubst src/%.c,build/%.o,$(SRCS))
-TARGET  = minios
+SRCS = $(wildcard src/*.c)
+OBJS = $(patsubst src/%.c,build/%.o,$(SRCS))
 
-# one 'make' builds everything the docs and the demo refer to
-all: $(TARGET) examples experiment-bins
+TEST_OBJS = $(filter-out build/main.o,$(OBJS))
 
-# link step: all the .o files become one program
-$(TARGET): $(OBJS)
+EXAMPLES = $(patsubst examples/%.c,bin/%,$(wildcard examples/*.c))
+
+all: bin/minios bin/minios_test $(EXAMPLES)
+
+bin/minios: $(OBJS) | bin
 	$(CC) $(OBJS) -o $@ $(LDLIBS)
-	@echo "built ./$(TARGET) — now run:  ./$(TARGET)"
 
-# compile step: one .c file -> one .o file
-#   $@ = the .o   $< = the .c
+bin/minios_test: tests/minios_test.c $(TEST_OBJS) | bin
+	$(CC) $(CFLAGS) $^ -o $@ $(LDLIBS)
+
+bin/%: examples/%.c | bin
+	$(CC) -std=c11 -O0 -Wall -Wextra -D_GNU_SOURCE -pthread $< -o $@ -lm
+
 build/%.o: src/%.c include/minios.h | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-build:
-	mkdir -p build
+build bin:
+	mkdir -p $@
 
-run: $(TARGET)
-	./$(TARGET)
+test: all
+	./tests/run_all.sh
 
-# a quick non-interactive check, good for the demo
-demo: $(TARGET)
-	./$(TARGET) demo.txt
+tsan:
+	$(MAKE) clean
+	$(MAKE) CFLAGS="$(CFLAGS) -fsanitize=thread -O1" LDLIBS="$(LDLIBS) -fsanitize=thread" bin/minios_test
+	TSAN_OPTIONS="suppressions=$(CURDIR)/tests/tsan.supp" ./bin/minios_test --stress
+	$(MAKE) clean
 
 clean:
-	rm -rf build $(TARGET)
+	rm -rf build bin
 
-.PHONY: all run demo clean
-
-# ---- handbook demo programs (Chapters 3 and 4), each is standalone ----
-EX_SRCS = $(wildcard examples/*.c)
-EX_BINS = $(patsubst examples/%.c,build/ex_%,$(EX_SRCS))
-
-examples: $(EX_BINS)
-
-build/ex_%: examples/%.c | build
-	$(CC) $(CFLAGS) $< -o $@ $(LDLIBS)
-
-.PHONY: examples
-
-# ---- experiments (Chapter 4 analysis) ----
-# exp4 links against the project's own object files.
-EXP_STANDALONE = build/exp1_fork_vs_exec build/exp2_cow build/exp3_zombie_orphan
-
-experiment-bins: $(EXP_STANDALONE) build/exp4_procscan
-
-experiments: $(TARGET) examples experiment-bins
-	@echo "now run:  ./experiments/run_experiments.sh"
-
-build/exp%: experiments/exp%.c | build
-	$(CC) $(CFLAGS) $< -o $@ $(LDLIBS)
-
-build/exp4_procscan: experiments/exp4_procscan.c build/process.o build/util.o | build
-	$(CC) $(CFLAGS) $^ -o $@ $(LDLIBS)
-
-.PHONY: experiments experiment-bins
+.PHONY: all test tsan clean

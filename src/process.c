@@ -1,4 +1,5 @@
 #include "minios.h"
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -8,8 +9,8 @@
 #include <unistd.h>
 
 const command_t cmds_process[] = {
-    { "run",       cmd_run,       "run <program> [args...]",       "fork -> exec -> waitpid (Ch 4)" },
-    { "processes", cmd_processes, "processes [-m|-c] [-n N] [-t]", "List processes from /proc (-m mem, -c cpu, -t my children)" },
+    { "run",       cmd_run,       "run <program> [args...]",       "fork, exec, then wait for the program" },
+    { "processes", cmd_processes, "processes [-m|-c] [-n N] [-t]", "list processes from /proc (-m memory, -c cpu, -t own children)" },
     { NULL, NULL, NULL, NULL }
 };
 
@@ -17,7 +18,7 @@ int run_program(char **args)
 {
     pid_t pid;
 
-    fflush(NULL);
+    fflush(NULL);                      /* else buffered output is printed twice */
     pid = fork();
     if (pid < 0) {
         perror("fork");
@@ -25,9 +26,9 @@ int run_program(char **args)
     }
 
     if (pid == 0) {
-        execvp(args[0], args);
+        execvp(args[0], args);         /* returns only on failure */
         fprintf(stderr, "run: %s: %s\n", args[0], strerror(errno));
-        _exit(127);
+        _exit(127);                    /* _exit: keep the parent's stdio copy unflushed */
     }
 
     int status;
@@ -89,7 +90,7 @@ int proc_read(pid_t pid, process_info_t *out)
     int ppid;
     unsigned long long ut, st;
     long threads, rss_pages;
-    /* fields 3..24 */
+
     int got = sscanf(rp + 2,
                      "%c %d %*d %*d %*d %*d %*u %*u %*u %*u %*u %llu %llu %*d %*d %*d %*d %ld %*d %*u %*u %ld",
                      &out->state, &ppid, &ut, &st, &threads, &rss_pages);

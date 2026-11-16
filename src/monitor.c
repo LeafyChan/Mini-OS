@@ -1,4 +1,5 @@
 #include "minios.h"
+
 #include <string.h>
 #include <sys/utsname.h>
 #include <unistd.h>
@@ -78,7 +79,7 @@ void show_system_info(void)
     if (read_uptime(&up, &idle) == 0) {
         fmt_duration(up, buf, sizeof buf);
         printf("  Uptime      : %.2f s  (%s)\n", up, buf);
-        /* idle is added up over every CPU, so it can exceed the uptime */
+
         printf("  Idle time   : %.2f s  (summed over %ld CPUs)\n", idle, ncpu);
     } else {
         printf("  Uptime      : unavailable\n");
@@ -86,6 +87,7 @@ void show_system_info(void)
 
     if (read_meminfo(&mem) == 0 && mem.total_kb > 0) {
         unsigned long used = mem.total_kb - mem.available_kb;
+
         double frac = (double)used / (double)mem.total_kb;
 
         printf("  Memory      : %lu MB total, %lu MB available, %lu MB free\n",

@@ -1,4 +1,5 @@
 #include "minios.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,9 +16,9 @@ typedef struct {
     double         cpu_pct;
 } top_row_t;
 
-
 static struct termios saved_tio;
 static bool raw_mode = false;
+
 static void term_raw(void)
 {
     if (tcgetattr(STDIN_FILENO, &saved_tio) != 0)
@@ -75,7 +76,7 @@ static void render(const cpu_snapshot_t *a, const cpu_snapshot_t *b,
     if (tty)
         printf(ANSI_CLEAR);
     else
-        printf("---- top frame %d ----\n", frame);
+        printf("top frame %d\n", frame);
 
     struct utsname uts;
     double up = 0, idle = 0;
@@ -90,9 +91,10 @@ static void render(const cpu_snapshot_t *a, const cpu_snapshot_t *b,
     load_info_t load = { 0 };
     read_loadavg(&load);
 
-    printf("%sMiniOS top%s — %s — %s — up %s — load %.2f %.2f %.2f\n",
+    printf("%sMiniOS top%s  %s  %s  up %s  load %.2f %.2f %.2f\n",
            clr(ANSI_BOLD), clr(ANSI_RESET), uts.nodename, clock, upbuf,
            load.load1, load.load5, load.load15);
+
     int states[128] = { 0 };
     long threads = 0;
     for (int i = 0; i < ncur; i++) {
@@ -101,6 +103,7 @@ static void render(const cpu_snapshot_t *a, const cpu_snapshot_t *b,
     }
     printf("Tasks: %d processes (%ld threads) | %d running, %d sleeping, %d zombie\n",
            ncur, threads, states['R'], states['S'] + states['I'], states['Z']);
+
     double all = cpu_util_percent(&a->total, &b->total);
     printf("\nCPU all  ");
     print_bar(stdout, all / 100, 30);
@@ -112,6 +115,7 @@ static void render(const cpu_snapshot_t *a, const cpu_snapshot_t *b,
         print_bar(stdout, u / 100, 20);
         printf(" %5.1f%%%s", u, (i % 2 == 1 || i == b->ncpu - 1) ? "\n" : "   ");
     }
+
     mem_info_t m;
     if (read_meminfo(&m) == 0 && m.total_kb > 0) {
         double used = (double)(m.total_kb - m.available_kb);
@@ -135,6 +139,7 @@ static void render(const cpu_snapshot_t *a, const cpu_snapshot_t *b,
     for (int i = 0; i < nz && i < 4; i++)
         printf("%s %.1f°C  ", z[i].type, z[i].celsius);
     putchar('\n');
+
     unsigned long long dtotal = 0;
     {
         const cpu_times_t *x = &a->total, *y = &b->total;
@@ -163,6 +168,7 @@ static void render(const cpu_snapshot_t *a, const cpu_snapshot_t *b,
     for (int i = 0; i < ncur; i++) {
         const process_info_t *p = &rows[i].info;
         bool self = (p->pid == getpid());
+
         if (i >= TOP_SHOW && !(self && !self_shown))
             continue;
         self_shown |= self;
@@ -173,7 +179,7 @@ static void render(const cpu_snapshot_t *a, const cpu_snapshot_t *b,
     }
 
     printf("\n%s[q] quit  [+/-] refresh %.1fs%s\n", clr(ANSI_DIM), interval, clr(ANSI_RESET));
-    fflush(stdout);                     /* without this the screen looks frozen */
+    fflush(stdout);
 }
 
 cmd_status_t cmd_top(int argc, char **argv)

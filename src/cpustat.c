@@ -1,4 +1,5 @@
 #include "minios.h"
+
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,10 +33,10 @@ int read_cpu_snapshot(cpu_snapshot_t *s)
                            label, &t.user, &t.nice, &t.system, &t.idle,
                            &t.iowait, &t.irq, &t.softirq, &t.steal);
             if (n < 5)
-                continue;                    
+                continue;
 
             if (strcmp(label, "cpu") == 0) {
-                s->total = t;                  
+                s->total = t;
             } else {
                 int idx = atoi(label + 3);
                 if (idx >= 0 && idx < MAX_CPUS) {
@@ -140,7 +141,6 @@ cmd_status_t cmd_cpu(int argc, char **argv)
            clr(ANSI_BOLD), sample, after->ncpu, clr(ANSI_RESET));
     printf("  %-5s %6s %6s %6s  %s\n", "CPU", "usr%", "sys%", "idle%", "busy");
 
-    /* i = -1 is the whole machine, then one row per core */
     for (int i = -1; i < after->ncpu; i++) {
         const cpu_times_t *x = (i < 0) ? &before->total : &before->cpu[i];
         const cpu_times_t *y = (i < 0) ? &after->total  : &after->cpu[i];

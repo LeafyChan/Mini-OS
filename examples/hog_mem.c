@@ -1,4 +1,3 @@
-/* Test helper for M2's runlimit: allocates and touches N MB (default 200). */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

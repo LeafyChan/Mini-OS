@@ -1,4 +1,3 @@
-/* Handbook 4.4 — fork + exec + waitpid (verbatim, plus 4.5 "print the exit status"). */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

@@ -1,4 +1,3 @@
-/* Handbook 4.1 — fork() (verbatim). */
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>

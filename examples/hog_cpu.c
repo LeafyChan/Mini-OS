@@ -1,4 +1,3 @@
-/* Test helper for M2's runlimit/limit: burns CPU for N seconds (default: forever). */
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

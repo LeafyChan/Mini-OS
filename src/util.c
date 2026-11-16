@@ -1,4 +1,5 @@
 #include "minios.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
@@ -109,6 +110,7 @@ const char *clr(const char *ansi)
 {
     return color_enabled() ? ansi : "";
 }
+
 void print_bar(FILE *out, double fraction, int width)
 {
     if (fraction < 0)
@@ -156,3 +158,12 @@ void sleep_ms(long ms)
 }
 
 volatile sig_atomic_t minios_interrupted = 0;
+
+void block_signals_in_thread(void)
+{
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGINT);
+    sigaddset(&set, SIGCHLD);
+    pthread_sigmask(SIG_BLOCK, &set, NULL);
+}

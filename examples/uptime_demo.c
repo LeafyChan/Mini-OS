@@ -1,4 +1,3 @@
-/* Handbook 3.1 — your first /proc reader (verbatim). */
 #include <stdio.h>
 
 int main(void)
