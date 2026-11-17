@@ -22,6 +22,71 @@ fail() {
     FAIL=$((FAIL + 1))
 }
 
+
+# --------------------------------------------------
+# 0. Test M5 patch application and idempotency.
+# --------------------------------------------------
+
+echo
+echo "Testing M5 patcher..."
+
+PATCH_TEST_ROOT="$(mktemp -d)"
+PATCH_TEST_XV6="$PATCH_TEST_ROOT/xv6"
+
+cleanup_patch_test() {
+    git -C "$XV6" worktree remove --force "$PATCH_TEST_XV6" \
+        >/dev/null 2>&1 || true
+    rm -rf "$PATCH_TEST_ROOT"
+}
+
+trap cleanup_patch_test EXIT
+
+if [[ ! -f "$ROOT/xv6-patches/reference.patch" ||
+      ! -f "$ROOT/xv6-patches/apply.py" ]]; then
+    fail "M5 patcher files are missing"
+
+elif git -C "$XV6" worktree add --detach "$PATCH_TEST_XV6" fa2ddcb \
+        >/dev/null 2>&1; then
+
+    # Apply the patch to a clean xv6 baseline.
+    if python3 "$ROOT/xv6-patches/apply.py" \
+        --xv6 "$PATCH_TEST_XV6" \
+        > "$PATCH_TEST_ROOT/first.log" 2>&1 &&
+       grep -q "M5 patch applied successfully" "$PATCH_TEST_ROOT/first.log"; then
+
+        # Save the source state after the first application.
+        git -C "$PATCH_TEST_XV6" diff --binary \
+            > "$PATCH_TEST_ROOT/before.diff"
+
+        # Apply the patch a second time.
+        if python3 "$ROOT/xv6-patches/apply.py" \
+            --xv6 "$PATCH_TEST_XV6" \
+            > "$PATCH_TEST_ROOT/second.log" 2>&1 &&
+           grep -q "M5 patch is already applied" "$PATCH_TEST_ROOT/second.log"; then
+
+            # Verify the second application changed nothing.
+            git -C "$PATCH_TEST_XV6" diff --binary \
+                > "$PATCH_TEST_ROOT/after.diff"
+
+            if cmp -s "$PATCH_TEST_ROOT/before.diff" \
+                      "$PATCH_TEST_ROOT/after.diff"; then
+                pass "M5 patch applies cleanly and is idempotent"
+            else
+                fail "M5 patch changed source during second application"
+            fi
+        else
+            fail "M5 patch failed its second application"
+            cat "$PATCH_TEST_ROOT/second.log"
+        fi
+    else
+        fail "M5 patch failed to apply to clean xv6"
+        cat "$PATCH_TEST_ROOT/first.log"
+    fi
+else
+    fail "Could not create clean xv6 baseline for patch test"
+fi
+
+
 echo "======================================"
 echo "          MiniOS M5 Test Suite"
 echo "======================================"
@@ -272,6 +337,5 @@ echo
 echo "QEMU log: tests/out/m5_qemu.log"
 echo "Build log: tests/out/m5_build.log"
 echo
-echo "Patch idempotency: N/A (no patcher in repository)"
 
 [[ "$FAIL" -eq 0 ]]
