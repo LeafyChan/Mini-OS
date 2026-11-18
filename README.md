@@ -195,5 +195,3 @@ your branch -> make + your suite -> make test -> Pull Request -> 1 review -> mer
 | M4 | – | `pool`; live `prodcons` view; `deadlock_demo` |
 | M5 | `getpinfo()`, `ps_xv6`, trace report | – |
 | Team | `compare`; e8-e11 | `docs/experiments.md` (numbers live in `docs/results.txt`) |
-
-Differences from the plan, so nobody is surprised: 93 checks across 5 suites (plan said 157 across 7); version prints `MiniOS 3.0` (plan said `2.0-extended`); the trace report is at `xv6/docs/xv6_trace_report.md`. The unfinished M2/M4 extensions are optional; don't claim them in the report or demo unless they are merged and tested.
