@@ -1,16 +1,12 @@
-
 #!/usr/bin/env python3
-
 import argparse
 import subprocess
 import sys
 from pathlib import Path
 
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 PATCH_FILE = SCRIPT_DIR / "reference.patch"
 DEFAULT_XV6 = SCRIPT_DIR.parent / "xv6"
-
 
 def run(command, cwd=None):
     return subprocess.run(
@@ -21,11 +17,9 @@ def run(command, cwd=None):
         text=True,
     )
 
-
 def fail(message):
     print(f"ERROR: {message}", file=sys.stderr)
     sys.exit(1)
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -55,28 +49,28 @@ def main():
     check_repo = run(
         ["git", "-C", str(xv6_dir), "rev-parse", "--show-toplevel"]
     )
+    is_repo = (
+        check_repo.returncode == 0
+        and Path(check_repo.stdout.strip()).resolve() == xv6_dir
+    )
 
-    if check_repo.returncode != 0:
-        fail(f"Not a Git repository: {xv6_dir}")
+    def patch_cmd(*flags):
+        if is_repo:
+            return ["git", "-C", str(xv6_dir), "apply", *flags, str(PATCH_FILE)]
+        mapped = {"--reverse": "-R", "--check": "--dry-run"}
+        return ["patch", "-p1", "-s", "-f", "-d", str(xv6_dir),
+                "-i", str(PATCH_FILE), *[mapped[f] for f in flags]]
 
     print(f"xv6 source: {xv6_dir}")
     print(f"Patch file: {PATCH_FILE}")
 
-    # First check whether the patch has already been applied.
-    reverse_check = run([
-        "git", "-C", str(xv6_dir),
-        "apply", "--reverse", "--check", str(PATCH_FILE)
-    ])
+    reverse_check = run(patch_cmd("--reverse", "--check"))
 
     if reverse_check.returncode == 0:
         print("M5 patch is already applied. No changes needed.")
 
     else:
-        # If not applied, check whether it can be applied cleanly.
-        forward_check = run([
-            "git", "-C", str(xv6_dir),
-            "apply", "--check", str(PATCH_FILE)
-        ])
+        forward_check = run(patch_cmd("--check"))
 
         if forward_check.returncode != 0:
             print(forward_check.stderr, file=sys.stderr)
@@ -86,10 +80,7 @@ def main():
                 "or may contain partial M5 changes."
             )
 
-        apply_result = run([
-            "git", "-C", str(xv6_dir),
-            "apply", str(PATCH_FILE)
-        ])
+        apply_result = run(patch_cmd())
 
         if apply_result.returncode != 0:
             print(apply_result.stderr, file=sys.stderr)
@@ -97,17 +88,17 @@ def main():
 
         print("M5 patch applied successfully.")
 
-    # Verify that the resulting source has no whitespace errors.
-    whitespace_check = run([
-        "git", "-C", str(xv6_dir),
-        "diff", "--check"
-    ])
+    if is_repo:
+        whitespace_check = run([
+            "git", "-C", str(xv6_dir),
+            "diff", "--check"
+        ])
 
-    if whitespace_check.returncode != 0:
-        print(whitespace_check.stderr, file=sys.stderr)
-        fail("Whitespace validation failed.")
+        if whitespace_check.returncode != 0:
+            print(whitespace_check.stderr, file=sys.stderr)
+            fail("Whitespace validation failed.")
 
-    print("Whitespace validation passed.")
+        print("Whitespace validation passed.")
 
     if args.build:
         print("Building xv6...")
@@ -125,7 +116,6 @@ def main():
         print("xv6 build completed successfully.")
 
     print("M5 patch operation completed.")
-
 
 if __name__ == "__main__":
     main()

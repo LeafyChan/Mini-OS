@@ -1,17 +1,3 @@
-/* shmbench.c: pipe against posix shared memory. owner m3
- *
- * Both methods do the same work per message: the parent hands S bytes to a
- * child, the child copies them into its own buffer, checksums them, and
- * acknowledges. We time the full round trip.
- *
- *   pipe : parent write() -> kernel buffer -> child read()   (2 copies)
- *          ack comes back on a second pipe
- *   shm  : parent memcpy() into a shared page -> child reads it directly
- *          (1 copy); two process-shared semaphores signal "ready"/"done"
- *
- * Shared memory avoids the kernel copy but needs its own synchronization;
- * that trade-off is the point of the experiment.
- */
 #include "minios.h"
 
 #include <errno.h>
@@ -23,12 +9,12 @@
 #include <unistd.h>
 
 typedef struct {
-    sem_t    ready;       /* parent -> child: message in place      */
-    sem_t    done;        /* child -> parent: message processed     */
+    sem_t    ready;
+    sem_t    done;
     uint64_t len;
     uint64_t checksum;
     int      stop;
-    char     data[];      /* flexible array member                  */
+    char     data[];
 } shm_channel_t;
 
 static uint64_t fnv1a(const char *p, size_t n)
@@ -120,7 +106,7 @@ int bench_pipe(size_t msgs, size_t bytes, ipc_bench_result_t *out)
     double ms = now_ms() - t0;
 
     uint64_t zero = 0;
-    write_all(data[1], &zero, sizeof zero);          /* stop marker */
+    write_all(data[1], &zero, sizeof zero);
     close(data[1]);
     close(ack[0]);
     waitpid(pid, NULL, 0);
@@ -146,13 +132,13 @@ int bench_shm(size_t msgs, size_t bytes, ipc_bench_result_t *out)
         return -1;
     }
     shm_channel_t *ch = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    close(fd);            /* the mapping keeps the object alive            */
-    shm_unlink(name);     /* remove the name now: nothing leaks on a crash */
+    close(fd);
+    shm_unlink(name);
     if (ch == MAP_FAILED) {
         perror("mmap");
         return -1;
     }
-    sem_init(&ch->ready, 1, 0);   /* pshared = 1: usable across fork() */
+    sem_init(&ch->ready, 1, 0);
     sem_init(&ch->done, 1, 0);
     ch->stop = 0;
 
@@ -174,7 +160,7 @@ int bench_shm(size_t msgs, size_t bytes, ipc_bench_result_t *out)
     if (pid == 0) {
         char *rx = malloc(bytes ? bytes : 1);
         while (rx && sem_wait_retry(&ch->ready) == 0 && !ch->stop) {
-            memcpy(rx, ch->data, ch->len);         /* same work as the pipe reader */
+            memcpy(rx, ch->data, ch->len);
             ch->checksum = fnv1a(rx, ch->len);
             sem_post(&ch->done);
         }

@@ -16,9 +16,21 @@ static int run_commands(char *cmds)
     return last == CMD_ERROR ? 1 : 0;
 }
 
+static int finish(int rc)
+{
+    threads_cleanup();
+    bg_cleanup();
+    return rc;
+}
+
 int main(int argc, char **argv)
 {
     setvbuf(stdout, NULL, _IOLBF, 0);
+
+    if (argc > 1 && strcmp(argv[1], "--deadlock-child") == 0)
+        return deadlock_child_main();
+
+    bg_init();
 
     if (argc > 1 && strcmp(argv[1], "--version") == 0) {
         puts("MiniOS " MINIOS_VERSION);
@@ -28,7 +40,7 @@ int main(int argc, char **argv)
     if (argc > 2 && strcmp(argv[1], "-c") == 0) {
         char line[MAX_LINE];
         snprintf(line, sizeof line, "%s", argv[2]);
-        return run_commands(line);
+        return finish(run_commands(line));
     }
 
     if (argc > 1) {
@@ -39,12 +51,12 @@ int main(int argc, char **argv)
         }
         int rc = shell_run(fp, false);
         fclose(fp);
-        return rc == CMD_ERROR ? 1 : 0;
+        return finish(rc == CMD_ERROR ? 1 : 0);
     }
 
     bool interactive = isatty(STDIN_FILENO);
     if (interactive)
         printf("MiniOS %s. Type help, or quit to leave.\n", MINIOS_VERSION);
 
-    return shell_run(stdin, interactive) == CMD_ERROR ? 1 : 0;
+    return finish(shell_run(stdin, interactive) == CMD_ERROR ? 1 : 0);
 }

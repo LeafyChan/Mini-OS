@@ -1,4 +1,3 @@
-/* compare.c: the same jobs run by processes (m3) and by threads (m4). team file */
 #include "minios.h"
 
 #include <string.h>

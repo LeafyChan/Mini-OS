@@ -1,4 +1,3 @@
-/* handbook 5.2: send two messages. the reader sleeps, then reads once. */
 #include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>

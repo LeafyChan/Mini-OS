@@ -1,0 +1,103 @@
+machine: 2 cpu, Linux 6.18.44-fc-v595, 8024 MB
+date: Wed Nov 18 16:44:57 Asia 2026
+
+e1 fork output on a terminal and in a pipe
+terminal lines: 2
+pipe lines: 4
+
+e2 two writes, one read
+one read() returned 11 bytes: firstsecond
+frames: 3 messages kept apart, long one cut to 99 bytes, then eof -> PASS
+
+e3 race, 4 threads, 1000000 increments, 6 trials
+4 threads x 1000000 increments, expected 4000000
+  unsafe    trial 1: final = 2787675  lost = 1212325  WRONG
+  unsafe    trial 2: final = 1457026  lost = 2542974  WRONG
+  unsafe    trial 3: final = 2672108  lost = 1327892  WRONG
+  unsafe    trial 4: final = 2501601  lost = 1498399  WRONG
+  unsafe    trial 5: final = 1503882  lost = 2496118  WRONG
+  unsafe    trial 6: final = 2761024  lost = 1238976  WRONG
+  semaphore final = 4000000    1254.7 ms  correct
+  mutex     final = 4000000     124.0 ms  correct
+  atomic    final = 4000000     127.4 ms  correct
+
+e4 workers, 16 jobs of primes 60000 (needs cpu)
+  => 1 thread(s): 34.1 ms, speed-up 1.00x
+  => 2 thread(s): 17.9 ms, speed-up 1.91x
+  => 4 thread(s): 18.1 ms, speed-up 1.89x
+  => 8 thread(s): 16.2 ms, speed-up 2.11x
+e4 workers, 16 jobs of sleep 40 ms (needs no cpu)
+  => 1 thread(s): 646.5 ms, speed-up 1.00x
+  => 2 thread(s): 321.9 ms, speed-up 2.01x
+  => 4 thread(s): 161.1 ms, speed-up 4.01x
+  => 8 thread(s): 80.9 ms, speed-up 7.99x
+
+e5 pipe against shared memory
+  IPC       MSGS      BYTES   TOTAL ms   RTT us/msg       MB/s  CHECK
+  pipe     20000         64      516.0         25.8        2.4  ok
+  shm      20000         64      494.9         24.7        2.5  ok
+        shm is 1.04x faster than pipe for 64-byte messages
+  pipe     10000       4096      318.5         31.9      122.6  ok
+  shm      10000       4096      329.0         32.9      118.7  ok
+        shm is 0.97x slower than pipe for 4096-byte messages
+  pipe      2000      65536      320.7        160.4      389.8  ok
+  shm       2000      65536      243.6        121.8      513.2  ok
+        shm is 1.32x faster than pipe for 65536-byte messages
+  pipe       200    1048576      438.6       2193.2      456.0  ok
+  shm        200    1048576      330.4       1652.2      605.3  ok
+        shm is 1.33x faster than pipe for 1048576-byte messages
+
+e6 processes against threads
+100 sum jobs, arg 1000
+  method                    total ms   ms per job
+  processes, one by one         20.1        0.201
+  1 thread                       0.7        0.007
+  4 threads                      0.7        0.007
+100 primes jobs, arg 20000
+  method                    total ms   ms per job
+  processes, one by one         75.3        0.753
+  1 thread                      48.6        0.486
+  4 threads                     25.3        0.253
+40 sleep jobs, arg 5
+  method                    total ms   ms per job
+  processes, one by one        219.5        5.487
+  1 thread                     207.2        5.179
+  4 threads                     52.1        1.302
+
+e7 queue test, 4 producers, 4 consumers, 5000 items each
+stress: 20000 items, 0 delivered != once, pushed=20004 popped=20004 -> PASS
+
+e8 cost of fork alone, and what exec adds
+e8 fork + _exit + wait           0.129 ms   (range 0.124 - 0.145 over 7 reps)
+e8 fork + exec + wait            0.991 ms   (range 0.922 - 1.167 over 7 reps)
+e8 cost of exec alone            0.862 ms
+e8 exec makes it slower by        7.67 x    (worst case 9.42, best case 6.36)
+
+e9 does fork copy the parent's memory? (copy-on-write)
+e9 child exits immediately (does not touch the memory):
+e9   parent holds    1 MB -> fork+wait    0.136 ms
+e9   parent holds   16 MB -> fork+wait    0.699 ms
+e9   parent holds   64 MB -> fork+wait    1.764 ms
+e9   parent holds  256 MB -> fork+wait    4.493 ms
+e9 child WRITES to all of it (forces the real copy):
+e9   parent holds    1 MB -> fork+wait    1.176 ms
+e9   parent holds   16 MB -> fork+wait    9.418 ms
+e9   parent holds   64 MB -> fork+wait   40.184 ms
+e9   parent holds  256 MB -> fork+wait  159.939 ms
+
+e10 zombie and orphan, read back from /proc
+e10 zombie: child exits, parent deliberately does not wait()
+e10   before wait()          pid=8912 state=Z ppid=8911   <- ZOMBIE
+e10   after wait()           pid 8912 is gone from /proc
+
+e10 orphan: parent exits first, child keeps running
+e10   grandchild pid=8914, its parent is 8913
+e10   grandchild now         pid=8914 state=S ppid=1   <- REPARENTED
+
+e11 cost of one /proc scan (the processes command)
+e11 processes on this machine            69
+e11 one full /proc scan               0.360 ms
+e11 cost per process                 0.0052 ms
+e11 scans possible per second          2777
+e11 CPU used by top at 2.0s refresh   0.018 %
+e11 CPU used by top at 0.1s refresh   0.360 %

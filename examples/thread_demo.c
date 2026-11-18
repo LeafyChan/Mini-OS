@@ -1,4 +1,3 @@
-/* Handbook 6.1 - create one thread (verbatim). */
 #include <stdio.h>
 #include <pthread.h>
 

@@ -81,6 +81,17 @@ cmd_status_t shell_execute_line(char *line)
     if (line_has_pipeline(line))
         return run_pipeline(line) == 0 ? CMD_OK : CMD_ERROR;
 
+    bool background = false;
+    size_t len = strlen(line);
+    if (line[len - 1] == '&') {
+        background = true;
+        line[len - 1] = '\0';
+        line = str_trim(line);
+    }
+
+    char cmdline[256];
+    snprintf(cmdline, sizeof cmdline, "%s", line);
+
     char *argv[MAX_ARGS];
     int argc = split_args(line, argv, MAX_ARGS);
 
@@ -90,6 +101,17 @@ cmd_status_t shell_execute_line(char *line)
     }
     if (argc == 0)
         return CMD_OK;
+
+    if (background) {
+        char **args = argv;
+        if (strcmp(args[0], "run") == 0)
+            args++;
+        if (*args == NULL) {
+            fprintf(stderr, "usage: run <program> [args...] &\n");
+            return CMD_ERROR;
+        }
+        return run_background(args, cmdline) > 0 ? CMD_OK : CMD_ERROR;
+    }
 
     const command_t *c = shell_find_command(argv[0]);
     if (c == NULL) {
@@ -118,6 +140,7 @@ int shell_run(FILE *in, bool interactive)
     bool echo = !interactive;
 
     for (;;) {
+        bg_report_finished();
         if (interactive) {
             printf("%s%s%s", clr(ANSI_BOLD), MINIOS_PROMPT, clr(ANSI_RESET));
             fflush(stdout);

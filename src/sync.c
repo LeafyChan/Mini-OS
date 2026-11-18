@@ -33,40 +33,55 @@ void queue_destroy(job_queue_t *q)
 int queue_push(job_queue_t *q, job_t job)
 {
     atomic_fetch_add(&q->blocked_producers, 1);
-    int rc = sem_wait_retry(&q->empty);                 /* TODO 1: wait for a free slot */
+    int rc = sem_wait_retry(&q->empty);
     atomic_fetch_sub(&q->blocked_producers, 1);
     if (rc != 0)
         return -1;
 
-    sem_wait_retry(&q->mutex);                          /* TODO 2: enter critical section */
-    q->items[q->in] = job;                              /* TODO 3: insert */
+    sem_wait_retry(&q->mutex);
+    q->items[q->in] = job;
     q->in = (q->in + 1) % QUEUE_CAPACITY;
     atomic_fetch_add(&q->count, 1);
     atomic_fetch_add(&q->total_pushed, 1);
-    sem_post(&q->mutex);                                /* TODO 4: leave critical section */
-    sem_post(&q->full);                                 /* TODO 5: one more item */
+    sem_post(&q->mutex);
+    sem_post(&q->full);
     return 0;
+}
+
+int queue_snapshot(job_queue_t *q, bool occupied[QUEUE_CAPACITY], int ids[QUEUE_CAPACITY])
+{
+    sem_wait_retry(&q->mutex);
+    int n = atomic_load(&q->count);
+    for (int i = 0; i < QUEUE_CAPACITY; i++) {
+        occupied[i] = false;
+        ids[i] = 0;
+    }
+    for (int i = 0; i < n; i++) {
+        int slot = (q->out + i) % QUEUE_CAPACITY;
+        occupied[slot] = true;
+        ids[slot] = q->items[slot].type == JOB_STOP ? -1 : q->items[slot].id;
+    }
+    sem_post(&q->mutex);
+    return n;
 }
 
 int queue_pop(job_queue_t *q, job_t *job)
 {
     atomic_fetch_add(&q->blocked_consumers, 1);
-    int rc = sem_wait_retry(&q->full);                  /* TODO 6: wait for an item */
+    int rc = sem_wait_retry(&q->full);
     atomic_fetch_sub(&q->blocked_consumers, 1);
     if (rc != 0)
         return -1;
 
-    sem_wait_retry(&q->mutex);                          /* TODO 7: enter critical section */
-    *job = q->items[q->out];                            /* TODO 8: remove */
+    sem_wait_retry(&q->mutex);
+    *job = q->items[q->out];
     q->out = (q->out + 1) % QUEUE_CAPACITY;
     atomic_fetch_sub(&q->count, 1);
     atomic_fetch_add(&q->total_popped, 1);
-    sem_post(&q->mutex);                                /* TODO 9: leave critical section */
-    sem_post(&q->empty);                                /* TODO 10: one more free slot */
+    sem_post(&q->mutex);
+    sem_post(&q->empty);
     return 0;
 }
-
-/* race demo, handbook chapter 7 */
 
 typedef struct {
     long              iters;
@@ -77,7 +92,6 @@ typedef struct {
     pthread_mutex_t  *mtx;
 } race_arg_t;
 
-/* The unsafe loop is intentionally racy; volatile stops -O2 from folding it into one add. */
 static void *race_worker(void *p)
 {
     race_arg_t *a = p;

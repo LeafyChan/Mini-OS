@@ -1,15 +1,3 @@
-/* pipeline.c: "cmd1 | cmd2 | cmd3" with < > >>. owner m3
- *
- * for n commands we need N-1 pipes. Command i reads from pipe i-1 and
- * writes to pipe i:
- *
- *   cmd0 --p0--> cmd1 --p1--> cmd2
- *
- * dup2(p[1], STDOUT) makes "standard output" mean "the pipe". Every
- * process must then close ALL pipe descriptors it does not use; if any
- * process keeps a write end open, the reader never sees end-of-file and
- * the pipeline hangs (handbook ch. 11: "Pipe read hangs").
- */
 #include "minios.h"
 
 #include <errno.h>
@@ -40,7 +28,6 @@ bool line_has_pipeline(const char *line)
     return false;
 }
 
-/* split on '|' outside quotes, in place */
 static int split_stages(char *line, char **parts, int max)
 {
     int n = 0;
@@ -69,7 +56,7 @@ static int parse_stage(char *text, stage_t *st, bool first, bool last)
         return -1;
     memset(st, 0, sizeof *st);
     int argc = 0, i = 0;
-    if (strcmp(tok[0], "run") == 0)          /* "run cat f | run grep x" */
+    if (strcmp(tok[0], "run") == 0)
         i = 1;
     for (; i < nt; i++) {
         if (strcmp(tok[i], "<") == 0 || strcmp(tok[i], ">") == 0 || strcmp(tok[i], ">>") == 0) {
@@ -145,10 +132,10 @@ int run_pipeline(char *line)
         }
         if (pid == 0) {
             if (i > 0)
-                dup2(pipes[i - 1][0], STDIN_FILENO);     /* read from previous */
+                dup2(pipes[i - 1][0], STDIN_FILENO);
             if (i < n - 1)
-                dup2(pipes[i][1], STDOUT_FILENO);        /* write to next */
-            close_all(pipes, n - 1);                     /* close every original */
+                dup2(pipes[i][1], STDOUT_FILENO);
+            close_all(pipes, n - 1);
 
             if (stages[i].in_file) {
                 int fd = open(stages[i].in_file, O_RDONLY);
@@ -170,7 +157,7 @@ int run_pipeline(char *line)
         pids[started++] = pid;
     }
 
-    close_all(pipes, n - 1);                             /* parent keeps none */
+    close_all(pipes, n - 1);
 
     int last_status = -1, failures = 0;
     for (int i = 0; i < started; i++) {

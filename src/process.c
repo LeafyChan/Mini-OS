@@ -11,6 +11,11 @@
 const command_t cmds_process[] = {
     { "run",       cmd_run,       "run <program> [args...]",       "fork, exec, then wait for the program" },
     { "processes", cmd_processes, "processes [-m|-c] [-n N] [-t]", "list processes from /proc (-m memory, -c cpu, -t own children)" },
+    { "ps",        cmd_ps,        "ps [-c]",                       "background job table (-c clears finished jobs)" },
+    { "wait",      cmd_wait,      "wait [job_id]",                 "block until one or all background jobs finish" },
+    { "kill",      cmd_kill,      "kill <job_id> [TERM|KILL|STOP|CONT|INT]", "send a signal to a background job" },
+    { "runlimit",  cmd_runlimit,  "runlimit [-c sec] [-m MB] [-f files] <prog> [args]", "run a program under setrlimit() caps" },
+    { "limit",     cmd_limit,     "limit <job_id|pid> [cpu <sec>] [mem <MB>]", "show or change limits of a running job (prlimit)" },
     { NULL, NULL, NULL, NULL }
 };
 
@@ -18,7 +23,7 @@ int run_program(char **args)
 {
     pid_t pid;
 
-    fflush(NULL);                      /* else buffered output is printed twice */
+    fflush(NULL);
     pid = fork();
     if (pid < 0) {
         perror("fork");
@@ -26,9 +31,9 @@ int run_program(char **args)
     }
 
     if (pid == 0) {
-        execvp(args[0], args);         /* returns only on failure */
+        execvp(args[0], args);
         fprintf(stderr, "run: %s: %s\n", args[0], strerror(errno));
-        _exit(127);                    /* _exit: keep the parent's stdio copy unflushed */
+        _exit(127);
     }
 
     int status;

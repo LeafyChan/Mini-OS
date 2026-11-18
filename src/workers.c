@@ -10,17 +10,17 @@ void *worker_main(void *arg)
 
     while (!atomic_load(&ctx->shutdown)) {
         job_t job;
-        if (queue_pop(ctx->queue, &job) != 0)           /* TODO 1: obtain a job */
+        if (queue_pop(ctx->queue, &job) != 0)
             break;
-        if (job.type == JOB_STOP)                       /* poison pill: wakes a thread blocked on full */
+        if (job.type == JOB_STOP)
             break;
 
         char text[RESULT_MAX];
         double t0 = now_ms();
-        long value = job_execute(&job, text, sizeof text);      /* TODO 2: process it */
+        long value = job_execute(&job, text, sizeof text);
         double dt = now_ms() - t0;
 
-        ctx->jobs_done++;                               /* TODO 3: record (ctx is thread-private) */
+        ctx->jobs_done++;
         ctx->result_sum += value;
         ctx->busy_ms += dt;
 
@@ -98,7 +98,6 @@ int workers_run(int nthreads, int njobs, job_type_t type, long arg,
     return run_threads(nthreads, njobs, type, arg, verbose, false, elapsed_ms);
 }
 
-/* silent version, returns the time in ms or -1 */
 double workers_time(int nthreads, int njobs, job_type_t type, long arg)
 {
     double ms = 0;
@@ -175,5 +174,11 @@ const command_t cmds_threads[] = {
       "threads drain the 5 slot queue, workers bench times 1, 2, 4 and 8 threads" },
     { "race",    cmd_race,         "race [iters] [threads] [trials]",
       "unsafe counter against semaphore, mutex and atomic" },
+    { "prodcons", cmd_prodcons, "prodcons [P] [C] [items] [p_ms] [c_ms]",
+      "producer-consumer with a live view of the 5 slot buffer" },
+    { "pool",     cmd_pool,     "pool start|submit|batch|status|resize|policy|pause|resume|wait|stop|demo",
+      "resizable thread pool, FIFO or priority scheduling" },
+    { "deadlock_demo", cmd_deadlock_demo, "deadlock_demo [hang|detect|order|trylock|all]",
+      "hold-and-wait deadlock, detection, recovery and prevention" },
     { NULL, NULL, NULL, NULL }
 };

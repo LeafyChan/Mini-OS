@@ -1,15 +1,3 @@
-/* ipc.c: pipe messages (handbook 5.3). owner m3
- *
- * A pipe is a BYTE STREAM: it does not remember where one write() ended.
- * Two messages written back-to-back can arrive as one read(), and one large
- * message can arrive in pieces. So every message is framed:
- *
- *     [ uint32 length ][ length bytes of text ]
- *
- * The header and body go out in ONE write() when they fit in PIPE_BUF
- * (4096 bytes on Linux): POSIX guarantees such writes are atomic, so
- * several workers sharing one pipe cannot interleave their messages.
- */
 #include "minios.h"
 
 #include <errno.h>
@@ -35,7 +23,6 @@ ssize_t write_all(int fd, const void *buf, size_t n)
     return (ssize_t)done;
 }
 
-/* Returns bytes read; less than n only at end-of-file. */
 ssize_t read_all(int fd, void *buf, size_t n)
 {
     size_t done = 0;
@@ -47,7 +34,7 @@ ssize_t read_all(int fd, void *buf, size_t n)
             return -1;
         }
         if (r == 0)
-            break;                       /* every write end is closed */
+            break;
         done += (size_t)r;
     }
     return (ssize_t)done;
@@ -65,7 +52,6 @@ int send_result(int fd, const char *result)
         return -1;
     }
 
-    /* TODO 1: write the result (header + body, one write when possible) */
     uint32_t hdr = (uint32_t)len;
     size_t total = sizeof hdr + len;
     char small[PIPE_BUF];
@@ -87,22 +73,17 @@ int receive_result(int fd, char *buf, size_t capacity)
         return -1;
     }
 
-    /* TODO 2: read the result, header first, then the body */
     uint32_t len;
     ssize_t r = read_all(fd, &len, sizeof len);
     if (r == 0)
-        return IPC_EOF;                  /* sender closed: no more messages */
+        return IPC_EOF;
     if (r != (ssize_t)sizeof len)
-        return -1;                       /* truncated header */
+        return -1;
     if (len > IPC_MAX_MESSAGE) {
         errno = EPROTO;
         return -1;
     }
 
-    /* TODO 3: make sure the received data is safe to use
-     *   - never write past 'capacity'
-     *   - always NUL-terminate
-     *   - drain any bytes we could not keep so the NEXT message still lines up */
     size_t keep = len < capacity - 1 ? len : capacity - 1;
     if (read_all(fd, buf, keep) != (ssize_t)keep)
         return -1;
@@ -119,7 +100,6 @@ int receive_result(int fd, char *buf, size_t capacity)
     return (int)keep;
 }
 
-/* job_result_t travels as text: "id|value|pid|worker|ms|text" */
 int send_job_result(int fd, const job_result_t *r)
 {
     char msg[RESULT_MAX + 128];

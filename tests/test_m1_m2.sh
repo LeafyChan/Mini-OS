@@ -50,4 +50,22 @@ else
   echo "SKIP  examples not built (run: make examples)"
 fi
 
+echo "m2 extensions: background jobs and resource limits"
+M="timeout 30 ./bin/minios -c"
+check "bg: job id and pid printed"        "^\[1\] [0-9]+"            $M "run sleep 0.2 &"
+check "bg: ps shows Running"              "Running .*run sleep 1"    $M "run sleep 1 &; ps"
+check "bg: SIGCHLD reaps and reports"     "Done\(0\)"                $M "run sleep 0.2 &; run sleep 0.5; ps"
+check "bg: exit code captured"            "Done\(4\)"                $M "run sh -c 'exit 4' &; wait; ps"
+check "bg: wait blocks until finished"    "\[1\]\+ Done\(0\)"        $M "run sleep 0.3 &; wait 1"
+check "bg: kill TERM"                     "Killed\(TERM\)"           $M "run sleep 5 &; kill 1; wait"
+check "bg: STOP shows Stopped"            "Stopped"                  $M "run sleep 5 &; kill 1 STOP; ps"
+check "bg: cannot signal foreign pid"     "only MiniOS's own jobs"   $M "kill 1"
+check "bg: jobs killed at exit"           "terminated 1 background"  $M "run sleep 30 &"
+check "runlimit: CPU cap gives SIGXCPU"   "SIGXCPU"                  $M "runlimit -c 1 bin/hog_cpu"
+check "runlimit: memory cap stops malloc" "malloc failed"            $M "runlimit -m 40 bin/hog_mem 200"
+check "runlimit: usage on bad args"       "usage: runlimit"          $M "runlimit -c x ls"
+check "limit: shows limits of a job"      "cpu +soft unlimited"      $M "run sleep 2 &; limit 1"
+check "limit: prlimit changes a live job" "Killed\(XCPU\)"           $M "run bin/hog_cpu &; limit 1 cpu 1; wait 1"
+check "limit: refuses non-jobs"           "not a running MiniOS background job" $M "limit 1"
+
 summary

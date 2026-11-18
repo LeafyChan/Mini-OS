@@ -24,6 +24,8 @@
 #define QUEUE_CAPACITY 5
 #define RESULT_MAX     256
 #define NAME_LEN       64
+#define MAX_BG_JOBS    32
+#define POOL_MAX_THREADS 32
 
 #define ANSI_RESET  "\033[0m"
 #define ANSI_BOLD   "\033[1m"
@@ -31,10 +33,10 @@
 #define ANSI_RED    "\033[31m"
 #define ANSI_GREEN  "\033[32m"
 #define ANSI_YELLOW "\033[33m"
+#define ANSI_BLUE   "\033[34m"
 #define ANSI_CYAN   "\033[36m"
 #define ANSI_CLEAR  "\033[H\033[2J"
 
-/* commands: each module has one table that ends with a null name */
 typedef enum { CMD_OK = 0, CMD_ERROR = 1, CMD_EXIT = 2 } cmd_status_t;
 typedef cmd_status_t (*cmd_handler_t)(int argc, char **argv);
 
@@ -45,12 +47,11 @@ typedef struct {
     const char   *summary;
 } command_t;
 
-extern const command_t cmds_shell[];     /* m1 */
-extern const command_t cmds_process[];   /* m2 */
-extern const command_t cmds_ipc[];       /* m3 */
-extern const command_t cmds_threads[];   /* m4 */
+extern const command_t cmds_shell[];
+extern const command_t cmds_process[];
+extern const command_t cmds_ipc[];
+extern const command_t cmds_threads[];
 
-/* m1: data read from /proc */
 typedef struct {
     unsigned long total_kb, free_kb, available_kb, buffers_kb, cached_kb;
     unsigned long swap_total_kb, swap_free_kb;
@@ -77,7 +78,6 @@ typedef struct {
     double celsius;
 } thermal_zone_t;
 
-/* m2: one row of /proc/<pid>/stat */
 typedef struct {
     pid_t              pid, ppid;
     char               state;
@@ -87,7 +87,26 @@ typedef struct {
     unsigned long long cpu_ticks;
 } process_info_t;
 
-/* m3: a job and its result. m4 threads use the same structs */
+typedef enum { BG_FREE = 0, BG_RUNNING, BG_STOPPED, BG_DONE, BG_SIGNALED } bg_state_t;
+
+typedef struct {
+    int        id;
+    pid_t      pid;
+    bg_state_t state;
+    int        exit_code;
+    int        term_signal;
+    double     start_ms;
+    double     end_ms;
+    bool       reported;
+    char       cmdline[256];
+} bg_job_t;
+
+typedef struct {
+    long cpu_seconds;
+    long mem_mb;
+    long max_files;
+} exec_limits_t;
+
 typedef enum {
     JOB_SUM = 0,
     JOB_PRIMES,
@@ -110,8 +129,8 @@ typedef struct {
 typedef struct {
     int    job_id;
     long   value;
-    pid_t  worker_pid;      /* set by a process worker */
-    int    worker_id;       /* set by a thread worker, else -1 */
+    pid_t  worker_pid;
+    int    worker_id;
     double elapsed_ms;
     char   text[RESULT_MAX];
 } job_result_t;
@@ -126,7 +145,6 @@ typedef struct {
     bool        verified;
 } ipc_bench_result_t;
 
-/* m4: bounded queue and worker context */
 typedef struct {
     job_t      items[QUEUE_CAPACITY];
     int        in, out;
@@ -153,7 +171,9 @@ typedef struct {
 
 typedef enum { RACE_UNSAFE = 0, RACE_SEMAPHORE, RACE_MUTEX, RACE_ATOMIC } race_mode_t;
 
-/* m1: util.c */
+typedef enum { POLICY_FIFO = 0, POLICY_PRIORITY } sched_policy_t;
+typedef struct thread_pool thread_pool_t;
+
 double      now_ms(void);
 char       *str_trim(char *s);
 int         split_args(char *line, char **argv, int max);
@@ -167,12 +187,10 @@ void        sleep_ms(long ms);
 void        block_signals_in_thread(void);
 extern volatile sig_atomic_t minios_interrupted;
 
-/* m1: shell.c */
 int              shell_run(FILE *in, bool interactive);
 cmd_status_t     shell_execute_line(char *line);
 const command_t *shell_find_command(const char *name);
 
-/* m1: monitor.c, cpustat.c, dashboard.c */
 int          read_uptime(double *uptime_s, double *idle_s);
 int          read_meminfo(mem_info_t *m);
 int          read_loadavg(load_info_t *l);
@@ -184,7 +202,6 @@ int          read_thermal_zones(thermal_zone_t *zones, int max);
 cmd_status_t cmd_cpu(int argc, char **argv);
 cmd_status_t cmd_top(int argc, char **argv);
 
-/* m2: process.c */
 int          run_program(char **args);
 int          proc_read(pid_t pid, process_info_t *out);
 int          proc_list(process_info_t *out, int max);
@@ -192,7 +209,19 @@ const char  *proc_state_name(char s);
 cmd_status_t cmd_run(int argc, char **argv);
 cmd_status_t cmd_processes(int argc, char **argv);
 
-/* m3: ipc.c */
+void         bg_init(void);
+int          run_background(char **args, const char *cmdline);
+void         bg_report_finished(void);
+bool         bg_find(int id_or_pid, bg_job_t *copy);
+void         bg_cleanup(void);
+cmd_status_t cmd_ps(int argc, char **argv);
+cmd_status_t cmd_wait(int argc, char **argv);
+cmd_status_t cmd_kill(int argc, char **argv);
+int          run_limited(char **args, const exec_limits_t *lim);
+int          apply_limits_to_pid(pid_t pid, const exec_limits_t *lim);
+cmd_status_t cmd_runlimit(int argc, char **argv);
+cmd_status_t cmd_limit(int argc, char **argv);
+
 #define IPC_EOF (-2)
 ssize_t write_all(int fd, const void *buf, size_t n);
 ssize_t read_all(int fd, void *buf, size_t n);
@@ -201,7 +230,6 @@ int     receive_result(int fd, char *buf, size_t capacity);
 int     send_job_result(int fd, const job_result_t *r);
 int     receive_job_result(int fd, job_result_t *r);
 
-/* m3: jobs.c, pipeline.c, shmbench.c */
 int          job_next_id(void);
 int          job_parse(int argc, char **argv, job_t *out);
 long         job_execute(const job_t *job, char *text, size_t cap);
@@ -215,11 +243,12 @@ int          bench_pipe(size_t msgs, size_t bytes, ipc_bench_result_t *out);
 int          bench_shm(size_t msgs, size_t bytes, ipc_bench_result_t *out);
 cmd_status_t cmd_ipcbench(int argc, char **argv);
 
-/* m4: sync.c, workers.c */
 int          queue_init(job_queue_t *q);
 void         queue_destroy(job_queue_t *q);
 int          queue_push(job_queue_t *q, job_t job);
 int          queue_pop(job_queue_t *q, job_t *job);
+int          queue_snapshot(job_queue_t *q, bool occupied[QUEUE_CAPACITY],
+                            int ids[QUEUE_CAPACITY]);
 long         race_run(long iters, int threads, race_mode_t mode, double *ms);
 cmd_status_t cmd_race(int argc, char **argv);
 void        *worker_main(void *arg);
@@ -228,7 +257,23 @@ int          workers_run(int nthreads, int njobs, job_type_t type, long arg,
 double       workers_time(int nthreads, int njobs, job_type_t type, long arg);
 cmd_status_t cmd_workers(int argc, char **argv);
 
-/* team: compare.c, process workers against thread workers */
+thread_pool_t *pool_create(int nthreads, sched_policy_t policy);
+int          pool_submit(thread_pool_t *p, job_t job);
+int          pool_resize(thread_pool_t *p, int nthreads);
+void         pool_set_policy(thread_pool_t *p, sched_policy_t policy);
+void         pool_pause(thread_pool_t *p, bool paused);
+int          pool_wait_idle(thread_pool_t *p);
+size_t       pool_completed_order(thread_pool_t *p, int *ids, size_t max);
+void         pool_print_status(thread_pool_t *p, FILE *out);
+void         pool_destroy(thread_pool_t *p);
+cmd_status_t cmd_pool(int argc, char **argv);
+void         threads_cleanup(void);
+void         viz_render_queue(FILE *out, job_queue_t *q, int producers_alive,
+                              int consumers_alive, bool in_place);
+cmd_status_t cmd_prodcons(int argc, char **argv);
+cmd_status_t cmd_deadlock_demo(int argc, char **argv);
+int          deadlock_child_main(void);
+
 cmd_status_t cmd_compare(int argc, char **argv);
 
 #endif

@@ -1,4 +1,3 @@
-/* Handbook 6.2 - two workers, one shared variable (verbatim). */
 #include <stdio.h>
 #include <pthread.h>
 

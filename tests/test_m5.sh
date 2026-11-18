@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 set -uo pipefail
 
@@ -22,11 +21,6 @@ fail() {
     FAIL=$((FAIL + 1))
 }
 
-
-# --------------------------------------------------
-# 0. Test M5 patch application and idempotency.
-# --------------------------------------------------
-
 echo
 echo "Testing M5 patcher..."
 
@@ -39,34 +33,44 @@ cleanup_patch_test() {
     rm -rf "$PATCH_TEST_ROOT"
 }
 
+make_baseline() {
+    if git -C "$XV6" rev-parse --verify -q fa2ddcb >/dev/null 2>&1; then
+        git -C "$XV6" worktree add --detach "$PATCH_TEST_XV6" fa2ddcb \
+            >/dev/null 2>&1
+    else
+        cp -r "$XV6" "$PATCH_TEST_XV6" &&
+        rm -rf "$PATCH_TEST_XV6/.git" &&
+        patch -R -p1 -s -f -d "$PATCH_TEST_XV6" \
+            -i "$ROOT/xv6-patches/reference.patch" >/dev/null 2>&1
+    fi
+}
+
+tree_sum() {
+    (cd "$1" && find . -path ./.git -prune -o -type f -print0 |
+        sort -z | xargs -0 md5sum)
+}
+
 trap cleanup_patch_test EXIT
 
 if [[ ! -f "$ROOT/xv6-patches/reference.patch" ||
       ! -f "$ROOT/xv6-patches/apply.py" ]]; then
     fail "M5 patcher files are missing"
 
-elif git -C "$XV6" worktree add --detach "$PATCH_TEST_XV6" fa2ddcb \
-        >/dev/null 2>&1; then
+elif make_baseline; then
 
-    # Apply the patch to a clean xv6 baseline.
     if python3 "$ROOT/xv6-patches/apply.py" \
         --xv6 "$PATCH_TEST_XV6" \
         > "$PATCH_TEST_ROOT/first.log" 2>&1 &&
        grep -q "M5 patch applied successfully" "$PATCH_TEST_ROOT/first.log"; then
 
-        # Save the source state after the first application.
-        git -C "$PATCH_TEST_XV6" diff --binary \
-            > "$PATCH_TEST_ROOT/before.diff"
+        tree_sum "$PATCH_TEST_XV6" > "$PATCH_TEST_ROOT/before.diff"
 
-        # Apply the patch a second time.
         if python3 "$ROOT/xv6-patches/apply.py" \
             --xv6 "$PATCH_TEST_XV6" \
             > "$PATCH_TEST_ROOT/second.log" 2>&1 &&
            grep -q "M5 patch is already applied" "$PATCH_TEST_ROOT/second.log"; then
 
-            # Verify the second application changed nothing.
-            git -C "$PATCH_TEST_XV6" diff --binary \
-                > "$PATCH_TEST_ROOT/after.diff"
+            tree_sum "$PATCH_TEST_XV6" > "$PATCH_TEST_ROOT/after.diff"
 
             if cmp -s "$PATCH_TEST_ROOT/before.diff" \
                       "$PATCH_TEST_ROOT/after.diff"; then
@@ -86,15 +90,6 @@ else
     fail "Could not create clean xv6 baseline for patch test"
 fi
 
-
-echo "======================================"
-echo "          MiniOS M5 Test Suite"
-echo "======================================"
-
-# --------------------------------------------------
-# 1. Check syscall numbers are unique.
-# --------------------------------------------------
-
 GETYEAR=$(awk '/#define SYS_getyear/ {print $3}' "$XV6/kernel/syscall.h")
 GETPINFO=$(awk '/#define SYS_getpinfo/ {print $3}' "$XV6/kernel/syscall.h")
 SYNC=$(awk '/#define SYS_sync/ {print $3}' "$XV6/kernel/syscall.h")
@@ -107,10 +102,6 @@ if [[ -n "$GETYEAR" && -n "$GETPINFO" && -n "$SYNC" ]] &&
 else
     fail "M5 syscall numbers are missing or duplicated"
 fi
-
-# --------------------------------------------------
-# 2. Build xv6.
-# --------------------------------------------------
 
 echo
 echo "Building xv6..."
@@ -125,10 +116,6 @@ else
     echo "$PASS passed, $FAIL failed"
     exit 1
 fi
-
-# --------------------------------------------------
-# 3-8. Boot QEMU and run xv6 tests.
-# --------------------------------------------------
 
 echo
 echo "Booting xv6 in QEMU..."
@@ -154,7 +141,6 @@ output = ""
 results = []
 proc = None
 selector = None
-
 
 def read_until(selector, pattern, timeout):
     global output
@@ -186,7 +172,6 @@ def read_until(selector, pattern, timeout):
 
     return False
 
-
 try:
     proc = subprocess.Popen(
         ["make", "qemu"],
@@ -200,18 +185,15 @@ try:
     selector = selectors.DefaultSelector()
     selector.register(proc.stdout, selectors.EVENT_READ)
 
-    # Wait for the initial shell prompt.
     if not read_until(selector, r"(?m)^\$ ?", 45):
         results.append(("xv6 boots and reaches shell", False))
         raise RuntimeError("Timed out waiting for xv6 shell")
 
     results.append(("xv6 boots and reaches shell", True))
 
-    # Execute commands sequentially.
     for index, (command, expected) in enumerate(commands):
         marker = f"M5_COMMAND_DONE_{index}"
 
-        # Start searching only after this command is sent.
         start = len(output)
 
         proc.stdin.write(
@@ -234,12 +216,10 @@ try:
 
         command_output = output[start:].replace("\r", "")
 
-        # Remove the echoed marker command.
         command_output = command_output.replace(
             "echo " + marker, ""
         )
 
-        # Check expected output.
         success = re.search(
             expected, command_output, re.S
         ) is not None
@@ -248,8 +228,6 @@ try:
             (f"{command} produces expected output", success)
         )
 
-        # Runtime check: require a nonzero TICKS value
-        # in the process table after the CPU workload.
         if command.startswith("ps_xv6 spin"):
             tick_values = re.findall(
                 r"^\s*\d+\s+\d+\s+\w+\s+\d+\s+(\d+)\s+",
@@ -287,10 +265,6 @@ finally:
     if proc is not None and proc.stdout:
         proc.stdout.close()
 
-# --------------------------------------------------
-# 9. Check for kernel panic.
-# --------------------------------------------------
-
 panic = re.search(
     r"\bpanic:",
     output,
@@ -324,14 +298,7 @@ else
     fail "QEMU boot or runtime tests"
 fi
 
-# --------------------------------------------------
-# Final summary.
-# --------------------------------------------------
-
 echo
-echo "======================================"
-echo "M5 TEST SUMMARY"
-echo "======================================"
 echo "$PASS passed, $FAIL failed"
 echo
 echo "QEMU log: tests/out/m5_qemu.log"

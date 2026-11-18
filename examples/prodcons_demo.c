@@ -1,5 +1,3 @@
-/* Handbook 7.5 - producer-consumer (verbatim). 7.6 experiments: change
- * BUFFER_SIZE / N_ITEMS with -D, e.g. make examples EXTRA="-DBUFFER_SIZE=2". */
 #include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>

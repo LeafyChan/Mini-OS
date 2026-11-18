@@ -1,9 +1,3 @@
-/* jobs.c: job definitions, submit and jobs (handbook 5.3). owner m3
- *
- *   MiniOS (manager) --fork--> worker process --does work-->
- *        ^                                         |
- *        +------------- pipe <---------------------+
- */
 #include "minios.h"
 
 #include <errno.h>
@@ -26,7 +20,7 @@ static const long default_args[] = { 1000000, 100000, 50, 200000, 200, 0 };
 typedef struct {
     job_t        job;
     job_result_t result;
-    int          status;          /* 0 ok, else error */
+    int          status;
 } job_record_t;
 
 static job_record_t history[MAX_SUBMITTED];
@@ -43,8 +37,6 @@ const char *job_type_name(job_type_t t)
     return (unsigned)t < sizeof type_names / sizeof type_names[0] ? type_names[t] : "?";
 }
 
-/* "sum 100 5"  -> type sum, arg 100, priority 5
- * "job1"       -> type hash over the text "job1" (handbook: submit job1) */
 int job_parse(int argc, char **argv, job_t *out)
 {
     if (argc < 1)
@@ -72,7 +64,7 @@ int job_parse(int argc, char **argv, job_t *out)
     }
     if (out->type == JOB_FIB && out->arg > 100000000)
         return -1;
-    if (out->type == JOB_SUM && out->arg > 4000000000L)   /* n(n+1)/2 must fit in a long */
+    if (out->type == JOB_SUM && out->arg > 4000000000L)
         return -1;
     return 0;
 }
@@ -87,7 +79,6 @@ static bool is_prime(long n)
     return true;
 }
 
-/* Pure function of its input: safe to call from many threads at once. */
 long job_execute(const job_t *job, char *text, size_t cap)
 {
     long v = 0;
@@ -155,8 +146,8 @@ int submit_job(const job_t *job, job_result_t *out)
         return -1;
     }
 
-    if (pid == 0) {                           /* worker process */
-        close(fd[0]);                         /* worker only writes */
+    if (pid == 0) {
+        close(fd[0]);
         job_result_t r = { .job_id = job->id, .worker_pid = getpid(), .worker_id = -1 };
         double t0 = now_ms();
         r.value = job_execute(job, r.text, sizeof r.text);
@@ -166,7 +157,7 @@ int submit_job(const job_t *job, job_result_t *out)
         _exit(rc == 0 ? 0 : 1);
     }
 
-    close(fd[1]);                             /* manager only reads: now EOF can happen */
+    close(fd[1]);
     int rc = receive_job_result(fd[0], out);
     close(fd[0]);
 

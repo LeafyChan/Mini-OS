@@ -1,4 +1,3 @@
-/* Handbook 7.3 - semaphore protection (verbatim). */
 #include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>

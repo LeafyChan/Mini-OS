@@ -1,5 +1,3 @@
-/* Handbook 7 - the counter that lies (verbatim). Build with -O0 (the
- * Makefile does) or the optimiser may merge the increments. */
 #include <stdio.h>
 #include <pthread.h>
 

@@ -9,7 +9,18 @@ TEST_OBJS = $(filter-out build/main.o,$(OBJS))
 
 EXAMPLES = $(patsubst examples/%.c,bin/%,$(wildcard examples/*.c))
 
-all: bin/minios bin/minios_test $(EXAMPLES)
+EXPERIMENTS = bin/e8_fork_vs_exec bin/e9_cow bin/e10_zombie_orphan bin/e11_procscan
+
+all: bin/minios bin/minios_test $(EXAMPLES) $(EXPERIMENTS)
+
+experiments: all
+	sh experiments/run.sh
+
+bin/e11_procscan: experiments/e11_procscan.c $(TEST_OBJS) | bin
+	$(CC) $(CFLAGS) $^ -o $@ $(LDLIBS)
+
+bin/e%: experiments/e%.c | bin
+	$(CC) $(CFLAGS) $< -o $@ $(LDLIBS)
 
 bin/minios: $(OBJS) | bin
 	$(CC) $(OBJS) -o $@ $(LDLIBS)
@@ -27,7 +38,7 @@ build bin:
 	mkdir -p $@
 
 test: all
-	./tests/run_all.sh
+	bash tests/run_all.sh
 
 tsan:
 	$(MAKE) clean
@@ -38,4 +49,4 @@ tsan:
 clean:
 	rm -rf build bin
 
-.PHONY: all test tsan clean
+.PHONY: all experiments test tsan clean
